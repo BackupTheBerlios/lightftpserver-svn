@@ -53,7 +53,8 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_ftp_server_OBJECTS = ftp_server.$(OBJEXT) utils.$(OBJEXT)
+am_ftp_server_OBJECTS = ftp_server.$(OBJEXT) utils.$(OBJEXT) \
+	client.$(OBJEXT)
 ftp_server_OBJECTS = $(am_ftp_server_OBJECTS)
 ftp_server_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
@@ -169,14 +170,14 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-ftp_server_SOURCES = ftp_server.cpp utils.cpp
+ftp_server_SOURCES = ftp_server.cpp utils.cpp client.cpp
 
 # set the include path found by configure
 INCLUDES = $(all_includes)
 
 # the library search path.
 ftp_server_LDFLAGS = $(all_libraries) 
-noinst_HEADERS = commonheaders.h utils.h
+noinst_HEADERS = commonheaders.h utils.h client.h
 all: all-am
 
 .SUFFIXES:
@@ -248,6 +249,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ftp_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@
 
