@@ -25,7 +25,7 @@ ABBREVIATE_BRIEF       = "The $name class" \
 ALWAYS_DETAILED_SEC    = NO
 INLINE_INHERITED_MEMB  = NO
 FULL_PATH_NAMES        = YES
-STRIP_FROM_PATH        = /home/loki/work/scoala/retele/kdev_ftp_server/
+STRIP_FROM_PATH        = /home/loki/work/scoala/retele/ftp_server
 STRIP_FROM_INC_PATH    = 
 SHORT_NAMES            = NO
 JAVADOC_AUTOBRIEF      = NO
@@ -128,7 +128,8 @@ FILE_PATTERNS          = *.c \
                          *.xpm \
                          *.dox
 RECURSIVE              = YES
-EXCLUDE                = 
+EXCLUDE                = /home/loki/work/scoala/retele/ftp_server/autom4te.cache \
+                         /home/loki/work/scoala/retele/ftp_server/debug
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
 EXAMPLE_PATH           = 
