@@ -2,7 +2,7 @@
 <kdevelop>
   <general>
     <author>Cristi, Ion, Diana</author>
-    <email/>
+    <email></email>
     <version>0.1</version>
     <projectmanagement>KDevAutoProject</projectmanagement>
     <primarylanguage>C++</primarylanguage>
@@ -12,6 +12,9 @@
     </keywords>
     <versioncontrol>kdevsubversion</versioncontrol>
     <ignoreparts/>
+    <projectdirectory>.</projectdirectory>
+    <absoluteprojectpath>false</absoluteprojectpath>
+    <description></description>
   </general>
   <kdevautoproject>
     <general>
@@ -21,6 +24,7 @@
     <run>
       <mainprogram>src/ftp_server</mainprogram>
       <terminal>true</terminal>
+      <directoryradio>executable</directoryradio>
     </run>
     <configurations>
       <optimized>
@@ -39,6 +43,12 @@
         <cxxflags>-O0 -g3</cxxflags>
       </debug>
     </configurations>
+    <make>
+      <envvars>
+        <envvar value="1" name="WANT_AUTOCONF_2_5" />
+        <envvar value="1" name="WANT_AUTOMAKE_1_6" />
+      </envvars>
+    </make>
   </kdevautoproject>
   <kdevdoctreeview>
     <ignoretocs>
@@ -110,11 +120,57 @@
     <APPNAMESC>Ftp_server</APPNAMESC>
     <APPNAMEUC>FTP_SERVER</APPNAMEUC>
     <AUTHOR>Cristi, Ion, Diana</AUTHOR>
-    <EMAIL></EMAIL>
+    <EMAIL/>
     <LICENSE>GPL</LICENSE>
     <LICENSEFILE>COPYING</LICENSEFILE>
     <VERSION>0.1</VERSION>
     <YEAR>2005</YEAR>
     <dest>/home/loki/work/scoala/retele/ftp_server</dest>
   </substmap>
+  <cppsupportpart>
+    <filetemplates>
+      <interfacesuffix>.h</interfacesuffix>
+      <implementationsuffix>.cpp</implementationsuffix>
+    </filetemplates>
+  </cppsupportpart>
+  <kdevcppsupport>
+    <codecompletion>
+      <includeGlobalFunctions>true</includeGlobalFunctions>
+      <includeTypes>true</includeTypes>
+      <includeEnums>true</includeEnums>
+      <includeTypedefs>false</includeTypedefs>
+      <automaticCodeCompletion>true</automaticCodeCompletion>
+      <automaticArgumentsHint>true</automaticArgumentsHint>
+      <automaticHeaderCompletion>true</automaticHeaderCompletion>
+      <codeCompletionDelay>250</codeCompletionDelay>
+      <argumentsHintDelay>400</argumentsHintDelay>
+      <headerCompletionDelay>250</headerCompletionDelay>
+    </codecompletion>
+    <creategettersetter>
+      <prefixGet></prefixGet>
+      <prefixSet>set</prefixSet>
+      <prefixVariable>m_,_</prefixVariable>
+      <parameterName>theValue</parameterName>
+      <inlineGet>true</inlineGet>
+      <inlineSet>true</inlineSet>
+    </creategettersetter>
+  </kdevcppsupport>
+  <kdevdebugger>
+    <general>
+      <programargs></programargs>
+      <gdbpath></gdbpath>
+      <dbgshell>libtool</dbgshell>
+      <configGdbScript></configGdbScript>
+      <runShellScript></runShellScript>
+      <runGdbScript></runGdbScript>
+      <breakonloadinglibs>true</breakonloadinglibs>
+      <separatetty>false</separatetty>
+      <floatingtoolbar>false</floatingtoolbar>
+    </general>
+    <display>
+      <staticmembers>false</staticmembers>
+      <demanglenames>true</demanglenames>
+      <outputradix>10</outputradix>
+    </display>
+  </kdevdebugger>
 </kdevelop>

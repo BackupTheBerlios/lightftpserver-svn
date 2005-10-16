@@ -1,7 +1,7 @@
 /**
-The main file.
+Commonheaders.h short description.
 
-Long description of the main file.
+Commonheaders.h long description.
 */
 
 /***************************************************************************
@@ -24,30 +24,26 @@ Long description of the main file.
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-/*
-This is the main server file.
-*/
+#ifndef FTP_COMMON_HEADERS_H
+#define FTP_COMMON_HEADERS_H
 
-//this file is in the include folder, not the src one so we need to include accordingly
-#include "commonheaders.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
 
-#include <time.h>
+#include "utils.h"
 
 /**
-Current verbosity level ...
+Defines the current verbosity level of the server.
 
-If a log entry's verbosity level is bigger or equal with this value the log
-entry will be shown, otherwise it will not.
+The higher the value the more information that's printed by the server.
 */
-int Verbosity = 5;
+extern int Verbosity;
 
-int main()
-{
-        LogInit();
-        srand(time(NULL));
-        int i = random() % 1000;
-        printf("FTP Server started ...\nWaiting for clients to server ...\n");
-        Log(0, "This is a log entry with a string (%s) and a number(%d)", "this is the string", i);
-        LogDestroy();
-        return 0;
-}
+/**
+File where all the log is printed.
+*/
+extern FILE *LogFile;
+
+#endif
