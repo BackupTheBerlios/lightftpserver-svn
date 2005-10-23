@@ -82,4 +82,5 @@ char *GetLocalDateAsString(char *szDate, size_t size);
 */
 char *GetLocalDateTimeAsString(char *szDateTime, size_t size);
 
+char *StrTrim(char *szText, const char *szTrimChars);
 #endif //ifdef

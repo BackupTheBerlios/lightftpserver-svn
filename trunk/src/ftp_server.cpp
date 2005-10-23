@@ -31,6 +31,8 @@ This is the main server file.
 //this file is in the include folder, not the src one so we need to include accordingly
 #include "commonheaders.h"
 
+#include "configUtils.h"
+
 #include <time.h>
 
 /**
@@ -43,11 +45,22 @@ int Verbosity = 5;
 
 int main()
 {
-        LogInit();
+	      LogInit();
         srand(time(NULL));
         int i = random() % 1000;
         printf("FTP Server started ...\nWaiting for clients to server ...\n");
         Log(0, "This is a log entry with a string (%s) and a number(%d)", "this is the string", i);
         LogDestroy();
+        char buffer[INI_LINE_SIZE];
+        long caca;
+//        WriteSettingString("Config verbosity", "pipi uscat", "value for pipi uscat", "ftp.ini");
+//        WriteSettingString("Fucking something", "verbosity", "18", "ftp.ini");
+				GetSettingInt("Settings", "value", 00, caca, "ftp.ini");
+				GetSettingInt("Settings", "hex", 0x11, caca, "ftp.ini");
+				GetSettingInt("Settings", "octal", 0123, caca, "ftp.ini");
+        GetSettingString("Fucking something", "caca", "<error at caca>", buffer, sizeof(buffer), "ftp.ini");
+      	GetSettingInt("Fucking something", "verbosity", 0, caca, "ftp.ini");
+        GetSettingString("Config verbosity", "non existent", "<error at>", buffer, sizeof(buffer), "ftp.ini");
+        GetSettingString("Pipi uscat", "anything", "<error at pipi uscat>", buffer, sizeof(buffer), "ftp.ini");
         return 0;
 }

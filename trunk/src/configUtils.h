@@ -21,14 +21,31 @@
 #ifndef CHAT_CONFIGURATION_UTILS_H
 #define CHAT_CONFIGURATION_UTILS_H
 
+#define SECTION_START_CHAR '['
+#define SECTION_END_CHAR ']'
 
-int GetSettingString(char *szSection, char *szErrorString, char *szResult, int size, char *szIniFile);
-int GetSettingInt(char *szSection, int nErrorValue, int &nResult, char *szIniFile);
-int GetSettingLong(char *szSection, long nErrorValue, long &nResult, char *szIniFile);
-int GetSettingBool(char *szSection, char bErrorValue, char &bResult, char *szIniFile);
+#define COMMENT_CHARS "#;"
+#define WHITESPACE_CHARS "\n \t"
 
-int WriteSettingString(char *szSection, char *szValue, char *szIniFile);
-int WriteSettingInt(char *szSection, int nValue, char *szIniFile);
-int WriteSettingLong(char *szSection, long nValue, char *szIniFile);
+#define SETTING_ATTRIB_CHAR '='
+
+#define INI_LINE_SIZE 1024
+
+//int GetSettingSection(char *szSection, char *szResult, char *szIniFile);
+int GetSettingString(char *szSection, char *szSettingName, char *szErrorString, char *szResult, int size, char *szIniFile);
+int GetSettingInt(char *szSection, char *szSettingName, long nErrorValue, long &nResult, char *szIniFile);
+//int GetSettingLong(char *szSection, char *szSettingName, long nErrorValue, long &nResult, char *szIniFile);
+int GetSettingBool(char *szSection, char *szSettingName, char bErrorValue, char &bResult, char *szIniFile);
+
+/**
+\todo a lot of work here :(
+*/
+int WriteSettingString(char *szSection, char *szSettingName, char *szValue, char *szIniFile);
+
+/**
+\todo a lot of work here also :(
+*/
+int WriteSettingInt(char *szSection, char *szSettingName, int nValue, char *szIniFile);
+//int WriteSettingLong(char *szSection, char *szSettingName, long nValue, char *szIniFile);
 
 #endif

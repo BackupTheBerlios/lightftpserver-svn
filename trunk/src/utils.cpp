@@ -111,3 +111,29 @@ int Log(int nNeededVerbosity, char *format, ...)
 	fputs(str, LogFile);
 	return 0;
 }
+
+
+char *StrTrim(char *szText, const char *szTrimChars)
+{
+        int i = strlen(szText) - 1;
+        while ((i >= 0) && (strchr(szTrimChars, szText[i])))
+                {
+                        szText[i--] = '\0';
+                }
+        i = 0;
+        while (((unsigned int )i < strlen(szText)) && (strchr(szTrimChars, szText[i])))
+                {
+                        i++;
+                }
+        if (i)
+                {
+                        int size = strlen(szText);
+                        int j;
+                        for (j = i; j <= size; j++) //shift the \0 as well
+                                {
+                                        szText[j - i] = szText[j];
+                                }
+//                      memmove(szText, szText + i, size - i + 1); //copy the string without the first i characters
+                }
+        return szText;
+}
