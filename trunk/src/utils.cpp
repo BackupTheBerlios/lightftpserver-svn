@@ -4,7 +4,7 @@ Utils.cpp short description.
 Utils.cpp long description.
 */
 /***************************************************************************
- *   Copyright (C) 2005 by Cristi, Ion, Diana                              *
+ *   Copyright (C) 2005 by Cristi, Diana, Ion                              *
  *                                                                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
