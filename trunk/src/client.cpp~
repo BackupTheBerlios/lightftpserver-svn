@@ -24,7 +24,7 @@
 
 CClient::CClient()
 {
-	///\todo do constructor
+	///@todo do constructor
 	connected = 0;
 	nPathSize = 0;
 	szCurrentPath = NULL;
@@ -32,7 +32,7 @@ CClient::CClient()
 
 CClient::CClient(int commandSocket)
 {
-	///\todo do constructor
+	///@todo do constructor
 	connected = 0;
 	nPathSize = 0;
 	szCurrentPath = NULL;
@@ -41,7 +41,7 @@ CClient::CClient(int commandSocket)
 
 CClient::~ CClient()
 {
-	///\todo do destructor
+	///@todo do destructor
 	Disconnect();
 	if (szCurrentPath)
 		{
@@ -52,13 +52,13 @@ CClient::~ CClient()
 
 int CClient::Connect(char *address, int port)
 {
-	///\todo do connection
+	///@todo do connection
 	connected = 1;
 }
 
 int CClient::Disconnect()
 {
-	///\todo do disconnection
+	///@todo do disconnection
 }
 
 char *CClient::GetCurrentPath()

@@ -31,14 +31,14 @@ Utils.h detailed description.
 /**
 This function initialized the log file.
 
-If the file doesn't exist it will be created. Logging can also be redirected to <i>stdout</i> or <i>stderr</i>
-@sa LogDestroy, Log
+If the file doesn't exist it will be created. Logging can also be redirected to \a stdout or \a stderr
+\sa LogDestroy, Log
 */
 int LogInit();
 
 /**
 Closes the log file (if the file is not stdin, stdout or stderr)
-@sa LogInit, Log
+\sa LogInit, Log
 */
 int LogDestroy();
 
@@ -48,37 +48,37 @@ Writes a line to the log file.
 
 Can have a variable number of parameters and behaves in the same manner as printf
 (uses the same escape sequences - %s, %c, %d, ...)
-@param nNeededVerbosity The needed verbosity level for the log event to show. If nNeededVerbosity is smaller than Verbosity then the event won't appear in the log.
-@param format The format of the event (can include %s, %c, %d, ...)
-@sa LogInit, LogDestroy
+\param nNeededVerbosity The needed verbosity level for the log event to show. If  \a nNeededVerbosity is smaller than \a Verbosity then the event won't appear in the log.
+\param format The format of the event (can include %s, %c, %d, ...)
+\see LogInit, LogDestroy Verbosity
 */
 int Log(int nNeededVerbosity, char *format, ...);
 
 /**
 Returns the local time as a string using the current locale.
 
-@param szTime String where the time will be saved.
-@param size Maximum size of string.
-@return Returns the time as a string using the current locale.
-@sa GetLocalDateAsString, GetLocalDateTimeAsString
+\param szTime String where the time will be saved.
+\param size Maximum size of string.
+\return Returns the time as a string using the current locale.
+\see GetLocalDateAsString, GetLocalDateTimeAsString
 */
 char *GetLocalTimeAsString(char *szTime, size_t size);
 
 /**
 Returns the local date as a string using the current locale.
 
-@param szDate String where the time will be saved
-@param size Maximum size of string
-@return Returns the date as a string using the current locale.
-@sa GetLocalTimeAsString, GetLocalDateTimeAsString
+\param szDate String where the time will be saved
+\param size Maximum size of string
+\return Returns the date as a string using the current locale.
+\see GetLocalTimeAsString, GetLocalDateTimeAsString
 */
 char *GetLocalDateAsString(char *szDate, size_t size);
 
 /**Returns the current date and time as a string
-@param szDateTime Pointer to string that will hold the date and time.
-@param size Maximum size of string.
-@return Returns the date and time as a string.
-@sa GetLocalTimeAsString, GetLocalDateAsString
+\param szDateTime Pointer to string that will hold the date and time.
+\param size Maximum size of string.
+\return Returns the date and time as a string.
+\see GetLocalTimeAsString, GetLocalDateAsString
 */
 char *GetLocalDateTimeAsString(char *szDateTime, size_t size);
 

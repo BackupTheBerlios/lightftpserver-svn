@@ -25,6 +25,9 @@
 class CClient{
 	protected:
 		char *szCurrentPath;
+		int nMode;
+		int nType;
+		int nStructure;
 		int nPathSize;
 		int dataSocket;
 		int commandSocket;

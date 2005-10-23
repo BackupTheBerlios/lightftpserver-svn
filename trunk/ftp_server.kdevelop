@@ -1,7 +1,7 @@
 <?xml version = '1.0'?>
 <kdevelop>
   <general>
-    <author>Cristi, Ion, Diana</author>
+    <author>Cristi, Diana, Ion</author>
     <email></email>
     <version>0.1</version>
     <projectmanagement>KDevAutoProject</projectmanagement>
@@ -25,6 +25,10 @@
       <mainprogram>src/ftp_server</mainprogram>
       <terminal>true</terminal>
       <directoryradio>executable</directoryradio>
+      <customdirectory>/</customdirectory>
+      <programargs></programargs>
+      <autocompile>true</autocompile>
+      <envvars/>
     </run>
     <configurations>
       <optimized>
@@ -41,6 +45,7 @@
         <cxxcompiler>kdevgppoptions</cxxcompiler>
         <f77compiler>kdevg77options</f77compiler>
         <cxxflags>-O0 -g3</cxxflags>
+        <envvars/>
       </debug>
     </configurations>
     <make>
@@ -48,6 +53,11 @@
         <envvar value="1" name="WANT_AUTOCONF_2_5" />
         <envvar value="1" name="WANT_AUTOMAKE_1_6" />
       </envvars>
+      <abortonerror>true</abortonerror>
+      <numberofjobs>1</numberofjobs>
+      <dontact>false</dontact>
+      <makebin></makebin>
+      <prio>0</prio>
     </make>
   </kdevautoproject>
   <kdevdoctreeview>
@@ -97,6 +107,7 @@
     </ignoredoxygen>
   </kdevdoctreeview>
   <kdevfilecreate>
+    <filetypes/>
     <useglobaltypes>
       <type ext="cpp" />
       <type ext="h" />
@@ -106,12 +117,20 @@
     <groups>
       <group pattern="*.h" name="Header files" />
       <group pattern="*.cpp" name="Source files" />
+      <hidenonprojectfiles>false</hidenonprojectfiles>
+      <hidenonlocation>false</hidenonlocation>
     </groups>
+    <tree>
+      <hidepatterns></hidepatterns>
+      <hidenonprojectfiles>true</hidenonprojectfiles>
+      <showvcsfields>true</showvcsfields>
+    </tree>
   </kdevfileview>
   <kdevdocumentation>
     <projectdoc>
       <docsystem>Doxygen Documentation Collection</docsystem>
       <docurl>ftp_server.tag</docurl>
+      <usermanualurl/>
     </projectdoc>
   </kdevdocumentation>
   <substmap>
@@ -154,6 +173,7 @@
       <inlineGet>true</inlineGet>
       <inlineSet>true</inlineSet>
     </creategettersetter>
+    <references/>
   </kdevcppsupport>
   <kdevdebugger>
     <general>
@@ -173,4 +193,8 @@
       <outputradix>10</outputradix>
     </display>
   </kdevdebugger>
+  <ctagspart>
+    <customArguments></customArguments>
+    <customTagfilePath></customTagfilePath>
+  </ctagspart>
 </kdevelop>
