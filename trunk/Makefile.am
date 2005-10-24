@@ -3,3 +3,4 @@
 AUTOMAKE_OPTIONS = foreign 1.4
 
 SUBDIRS = src
+INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/src/logServer

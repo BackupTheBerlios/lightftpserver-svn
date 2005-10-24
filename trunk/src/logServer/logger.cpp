@@ -20,7 +20,7 @@
  
 #include "logServer.h"
 
-CLoggingServer logServer("../ftp_server.log");
+CLogServer logServer("../ftp_server.log");
 
 void SignalHandler(int nSignal)
 {

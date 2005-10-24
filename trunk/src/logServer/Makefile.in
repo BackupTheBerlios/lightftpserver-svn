@@ -54,7 +54,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_logServer_OBJECTS = logServer.$(OBJEXT) utils.$(OBJEXT) \
-	logger.$(OBJEXT)
+	logger.$(OBJEXT) logClient.$(OBJEXT)
 logServer_OBJECTS = $(am_logServer_OBJECTS)
 logServer_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
@@ -170,10 +170,10 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-INCLUDES = $(all_includes)
+INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/src/logServer $(all_includes)
 _SOURCES = logServer.cpp
-logServer_SOURCES = logServer.cpp utils.cpp logger.cpp
-noinst_HEADERS = logServer.h commonheaders.h utils.h
+logServer_SOURCES = logServer.cpp utils.cpp logger.cpp logClient.cpp
+noinst_HEADERS = logServer.h commonheaders.h utils.h logClient.h
 all: all-am
 
 .SUFFIXES:
@@ -245,6 +245,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logClient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logServer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logger.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@

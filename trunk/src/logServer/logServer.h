@@ -21,15 +21,15 @@
 #ifndef FTP_LOGGER_H
 #define FTP_LOGGER_H
 
-#include "../commonheaders.h"
-#include "../utils.h"
+#include "commonheaders.h"
+#include "utils.h"
 
 #define LOGSERVER_PORT 54345
 #define LOGSERVER_CLIENTS 64
 
 #define LOGSERVER_LINE_SIZE 4096
 
-class CLoggingServer{
+class CLogServer{
 	protected:
 		int nServerSocket;
 //		int nServerPID;
@@ -47,12 +47,12 @@ class CLoggingServer{
 		/**
 		\todo write doc
 		*/
-		CLoggingServer(char *szLogFileName);
+		CLogServer(char *szLogFileName);
 		
 		/**
 		\todo write doc
 		*/
-		~CLoggingServer();
+		~CLogServer();
 		
 		/**
 		This function initialized the logging server.

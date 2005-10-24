@@ -32,7 +32,7 @@ This is the main server file.
 #include "commonheaders.h"
 
 #include "configUtils.h"
-
+#include "logClient.h"
 #include <time.h>
 
 /**
@@ -45,6 +45,7 @@ int Verbosity = 5;
 
 int main()
 {
+				CLogClient log(5);
         srand(time(NULL));
         int i = random() % 1000;
         printf("FTP Server started ...\nWaiting for clients to server ...\n");

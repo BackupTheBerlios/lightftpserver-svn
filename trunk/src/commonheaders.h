@@ -45,16 +45,4 @@ Commonheaders.h long description.
 
 #include "utils.h"
 
-/**
-Defines the current verbosity level of the server.
-
-The higher the value the more information that's printed by the server.
-*/
-extern int Verbosity;
-
-/**
-File where all the log is printed.
-*/
-extern FILE *LogFile;
-
 #endif

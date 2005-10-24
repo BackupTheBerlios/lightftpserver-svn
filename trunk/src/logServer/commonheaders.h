@@ -1,1 +1,1 @@
-/home/loki/work/scoala/retele/ftp_server/src/commonheaders.h
+../commonheaders.h

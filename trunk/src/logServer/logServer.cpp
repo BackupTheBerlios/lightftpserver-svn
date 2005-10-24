@@ -24,7 +24,7 @@
 //int loggingServerSocket = 0;
 //pid_t loggingServerPID = 0;
 
-CLoggingServer::CLoggingServer(char *szLogFileName)
+CLogServer::CLogServer(char *szLogFileName)
 {
 	nServerSocket = 0;
 //	nServerPID = 0;
@@ -36,13 +36,13 @@ CLoggingServer::CLoggingServer(char *szLogFileName)
 //	LogServerInit();
 }
 
-CLoggingServer::~CLoggingServer()
+CLogServer::~CLogServer()
 {
 	free(szFileName);
 //	LogServerDestroy();
 }
 
-int CLoggingServer::WriteLogMessage(char *szMessage, int size)
+int CLogServer::WriteLogMessage(char *szMessage, int size)
 {
 ///\todo fix the multi-process issue(s) 
 	DebugMessage("(%d) Inside WriteLogMessage() ...\n", getpid());
@@ -58,7 +58,7 @@ int CLoggingServer::WriteLogMessage(char *szMessage, int size)
 	fclose(fin);
 }
 
-int CLoggingServer::LogServerRun()
+int CLogServer::LogServerRun()
 {
 	int res;
 	sockaddr_in client = {0};
@@ -87,7 +87,7 @@ int CLoggingServer::LogServerRun()
 		}
 }
 
-int CLoggingServer::WaitForMessages(int nClientSocket)
+int CLogServer::WaitForMessages(int nClientSocket)
 //void *WaitForMessages(void *data)
 {
 //	int nClientSocket = *(int *) data;
@@ -110,7 +110,7 @@ int CLoggingServer::WaitForMessages(int nClientSocket)
 	exit(0);
 }
 
-int CLoggingServer::StartLogServer()
+int CLogServer::StartLogServer()
 {
 	pid_t pid;
 	int res;
@@ -139,7 +139,7 @@ int CLoggingServer::StartLogServer()
 		}
 }
 
-int CLoggingServer::StopLogServer()
+int CLogServer::StopLogServer()
 {
 //	DebugMessage("(%d) Closing log server (%d)...\n", getpid(), nServerPID);
 //	DebugMessage("Current process group = %d\tChild process group = %d\n", getpgid(getpid()), getpgid(nServerPID));
@@ -154,7 +154,7 @@ int CLoggingServer::StopLogServer()
 		}
 }
 
-int CLoggingServer::LogServerInit()
+int CLogServer::LogServerInit()
 {
 	
 	char tmp[256];
@@ -166,7 +166,7 @@ int CLoggingServer::LogServerInit()
 	return 0;
 }
 
-int CLoggingServer::LogServerDestroy()
+int CLogServer::LogServerDestroy()
 {
 	char tmp[256];
 	char buffer[LOGSERVER_LINE_SIZE];
