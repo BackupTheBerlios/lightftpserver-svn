@@ -1,9 +1,3 @@
-/**
-Commonheaders.h short description.
-
-Commonheaders.h long description.
-*/
-
 /***************************************************************************
  *   Copyright (C) 2005 by Cristi, Diana, Ion                              *
  *                                                                         *
@@ -24,37 +18,58 @@ Commonheaders.h long description.
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef FTP_COMMON_HEADERS_H
-#define FTP_COMMON_HEADERS_H
+#ifndef FTP_LOGGER_H
+#define FTP_LOGGER_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
+#include "../commonheaders.h"
+#include "../utils.h"
 
-//socket stuff
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#define LOGSERVER_PORT 54345
+#define LOGSERVER_CLIENTS 64
 
-//process command stuff
-#include <signal.h>
+#define LOGSERVER_LINE_SIZE 4096
 
-#include "utils.h"
-
-/**
-Defines the current verbosity level of the server.
-
-The higher the value the more information that's printed by the server.
-*/
-extern int Verbosity;
-
-/**
-File where all the log is printed.
-*/
-extern FILE *LogFile;
+class CLoggingServer{
+	protected:
+		int nServerSocket;
+//		int nServerPID;
+		char *szFileName;
+		
+		int nServerPort;
+		int nMaxClients;
+		
+		int WaitForMessages(int nClientSocket);
+		int WriteLogMessage(char *message, int size);
+		
+		int StartLogServer();
+		int StopLogServer();
+	public:
+		/**
+		\todo write doc
+		*/
+		CLoggingServer(char *szLogFileName);
+		
+		/**
+		\todo write doc
+		*/
+		~CLoggingServer();
+		
+		/**
+		This function initialized the logging server.
+		
+		\sa LogServerDestroy, Log
+		*/
+		int LogServerInit();
+		
+		/**
+		Closes the logging server
+		\sa LogServerInit, Log
+		*/
+		int LogServerDestroy();
+		
+		int LogServerRun();
+};
+//extern int loggingSeverSocket;
+//extern int loggingServerPID;
 
 #endif
