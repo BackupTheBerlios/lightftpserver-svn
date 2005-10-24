@@ -28,31 +28,8 @@ Utils.h detailed description.
 #define FTP_UTILS_H
 
 #include "commonheaders.h"
-/**
-This function initialized the log file.
 
-If the file doesn't exist it will be created. Logging can also be redirected to \a stdout or \a stderr
-\sa LogDestroy, Log
-*/
-int LogInit();
-
-/**
-Closes the log file (if the file is not stdin, stdout or stderr)
-\sa LogInit, Log
-*/
-int LogDestroy();
-
-/**
-Writes a line to the log file.
-
-
-Can have a variable number of parameters and behaves in the same manner as printf
-(uses the same escape sequences - %s, %c, %d, ...)
-\param nNeededVerbosity The needed verbosity level for the log event to show. If  \a nNeededVerbosity is smaller than \a Verbosity then the event won't appear in the log.
-\param format The format of the event (can include %s, %c, %d, ...)
-\see LogInit, LogDestroy Verbosity
-*/
-int Log(int nNeededVerbosity, char *format, ...);
+#define SHOW_DEBUG_MESSAGES
 
 /**
 Returns the local time as a string using the current locale.
@@ -82,5 +59,20 @@ char *GetLocalDateAsString(char *szDate, size_t size);
 */
 char *GetLocalDateTimeAsString(char *szDateTime, size_t size);
 
+/**
+\todo write doc
+*/
 char *StrTrim(char *szText, const char *szTrimChars);
+
+
+/**
+\todo write doc
+*/
+sockaddr_in CreateSocketAddress(sa_family_t family, int port, char *host);
+
+/**
+\todo write doc
+*/
+void DebugMessage(char *format, ...);
+
 #endif //ifdef
