@@ -32,7 +32,7 @@ This is the main server file.
 #include "commonheaders.h"
 
 #include "configUtils.h"
-#include "logClient.h"
+//#include "logClient.h"
 #include <signal.h>
 #include <syslog.h>
 #include <time.h>
@@ -56,7 +56,7 @@ int main()
   
   //daemonization fuck me
   //new daemonization >:|
-  rcode = spoon();
+  rcode = fork();
   if (rcode == -1) {
     syslog(LOG_FTP|LOG_ERR, "daemonization stage 1 %m");
     exit(1);
@@ -123,14 +123,6 @@ int main()
     //parent
     close(connfd);
   }
-
-				CLogClient log(5);
-        srand(time(NULL));
-        i = random() % 1000;
-//         printf("FTP Server started ...\nWaiting for clients to server ...\n");
-//        Log(0, "This is a log entry with a string (%s) and a number(%d)", "this is the string", i);
-        char buffer[INI_LINE_SIZE];
-        long caca;
 //        WriteSettingString("Config verbosity", "pipi uscat", "value for pipi uscat", "ftp.ini");
 //        WriteSettingString("Fucking something", "verbosity", "18", "ftp.ini");
 /*
@@ -142,5 +134,8 @@ int main()
         GetSettingString("Config verbosity", "non existent", "<error at>", buffer, sizeof(buffer), "ftp.ini");
         GetSettingString("Pipi uscat", "anything", "<error at pipi uscat>", buffer, sizeof(buffer), "ftp.ini");
 */
-        return 0;
+	syslog(LOG_ERR, "this is an error message %m");
+	syslog(LOG_INFO, "this is an info message %m");
+	syslog(LOG_NOTICE, "and this is a notice message %m");
+  return 0;
 }

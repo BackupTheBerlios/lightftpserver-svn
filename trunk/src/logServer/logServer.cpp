@@ -24,6 +24,9 @@
 //int loggingServerSocket = 0;
 //pid_t loggingServerPID = 0;
 
+#define TRUE 1
+#define FALSE 0
+
 CLogServer::CLogServer(char *szLogFileName)
 {
 	nServerSocket = 0;
@@ -42,13 +45,23 @@ CLogServer::~CLogServer()
 //	LogServerDestroy();
 }
 
-int CLogServer::WriteLogMessage(char *szMessage, int size)
+int CLogServer::WriteLogMessage(char *szMessage, int size, char bWriteHeader)
 {
 ///\todo fix the multi-process issue(s) 
 	DebugMessage("(%d) Inside WriteLogMessage() ...\n", getpid());
 	FILE *fin = fopen("ftp_server.log", "at"); //multitasking problem ??
 	int printed = 0;
 	int tmp;
+	if (bWriteHeader)
+		{
+			char szDateTime[512], szTime[256];
+			GetLocalDateAsString(szDateTime, sizeof(szDateTime));
+			strcat(szDateTime, " at ");
+			GetLocalTimeAsString(szTime, sizeof(szTime));
+			strcat(szDateTime, szTime);
+			strcat(szDateTime, " : ");
+			fprintf(fin, "%s", szDateTime);
+		}
 	while (printed < size)
 		{
 			tmp = fprintf(fin, "%s", &szMessage[printed]);
@@ -64,10 +77,10 @@ int CLogServer::LogServerRun()
 	sockaddr_in client = {0};
 	int clientSocket;
 	int size;
-	DebugMessage("(%d) In LogServerRun() ...\n", getpid());
+	printf("(%d) In LogServerRun() ...\n", getpid());
 	while (1)
 		{
-			DebugMessage("(%d) Waiting for connections ...\n", getpid());
+			printf("(%d) Waiting for connections ...\n", getpid());
 			size = sizeof(client);
 			clientSocket = accept(nServerSocket, (sockaddr *) &client, (socklen_t *) &size);
 			DebugMessage("(%d) Client connected ...\n", getpid());
@@ -93,7 +106,7 @@ int CLogServer::WaitForMessages(int nClientSocket)
 //	int nClientSocket = *(int *) data;
 	char buffer[LOGSERVER_LINE_SIZE];
 	int size = 1;
-	DebugMessage("(%d) In WaitForMessages() ...\n", getpid());
+	printf("(%d) In WaitForMessages() ...\n", getpid());
 	while (size)
 		{
 			DebugMessage("(%d) Waiting for message ...\n", getpid());
@@ -103,10 +116,10 @@ int CLogServer::WaitForMessages(int nClientSocket)
 				{
 					buffer[size] = '\0';
 					DebugMessage("(%d) Writing log message ...\n", getpid());
-					WriteLogMessage(buffer, size);
+					WriteLogMessage(buffer, size, TRUE);
 				}
 		}
-	DebugMessage("(%d) Connection closed, closing the listening process as well ...\n", getpid());
+	printf("(%d) Connection closed, closing the listening process as well ...\n", getpid());
 	exit(0);
 }
 
@@ -114,7 +127,7 @@ int CLogServer::StartLogServer()
 {
 	pid_t pid;
 	int res;
-	DebugMessage("(%d) Starting log server ...\n", getpid());
+	printf("(%d) Starting log server ...\n", getpid());
 	setpgrp(); //set the process group of the child to the child process ID (to differenciate between the logging server and the ftp server)
 	nServerSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if (nServerSocket != -1)
@@ -150,7 +163,7 @@ int CLogServer::StopLogServer()
 	int res = kill(-getpid(), SIGQUIT); //close the logging server in the child process
 	if (res)
 		{
-			DebugMessage("An error (%s) occured while trying to kill process group ...\n", strerror(errno));
+			printf("An error (%s) occured while trying to kill process group ...\n", strerror(errno));
 		}
 }
 
@@ -162,7 +175,7 @@ int CLogServer::LogServerInit()
 	StartLogServer();
 	GetLocalDateTimeAsString(tmp, sizeof(tmp));
 	sprintf(buffer, "\n\n========================| Logging started: %s |========================\n", tmp);
-	WriteLogMessage(buffer, strlen(buffer));
+	WriteLogMessage(buffer, strlen(buffer), FALSE);
 	return 0;
 }
 
@@ -172,7 +185,7 @@ int CLogServer::LogServerDestroy()
 	char buffer[LOGSERVER_LINE_SIZE];
 	GetLocalDateTimeAsString(tmp, sizeof(tmp));
 	sprintf(buffer, "========================| Logging ended:  %s |=========================\n", tmp);
-	WriteLogMessage(buffer, strlen(buffer));
+	WriteLogMessage(buffer, strlen(buffer), FALSE);
 	StopLogServer();
 	return 0;
 }

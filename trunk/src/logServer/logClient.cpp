@@ -44,12 +44,12 @@ int CLogClient::LogClientInit()
 			int res = connect(nClientSocket, (sockaddr *) &addr, sizeof(sockaddr_in));
 			if (res)
 				{
-					printf("An error (%s) occured while trying to connect to logging server ...\n", strerror(errno));
+					DebugMessage("An error (%s) occured while trying to connect to logging server ...\n", strerror(errno));
 					nClientSocket = 0;
 				}
 		}
 		else{
-					printf("An error (%s) occured while trying to create the logging client socket ...\n", strerror(errno));
+					DebugMessage("An error (%s) occured while trying to create the logging client socket ...\n", strerror(errno));
 					exit(255);
 		}
 }
@@ -62,7 +62,7 @@ int CLogClient::LogClientDestroy()
 			int res = shutdown(nClientSocket, SHUT_RDWR);
 			if (res)
 				{
-					printf("Error (%s) closing socket ...\n", strerror(errno));
+					DebugMessage("Error (%s) closing socket ...\n", strerror(errno));
 				}
 		}
 }
@@ -78,7 +78,7 @@ int CLogClient::GetVerbosity()
 }
 
 
-int CLogClient::Log(int nNeededVerbosity, char *format, ...)
+int CLogClient::Log(int nNeededVerbosity, int params, char *format, ...)
 {
 	if (nNeededVerbosity > nVerbosity)
 		{
@@ -88,6 +88,33 @@ int CLogClient::Log(int nNeededVerbosity, char *format, ...)
 	char str[4096];
 	va_list	vararg;
 	int tBytes;
+	char szLogType[16] = {0};
+	switch (params)
+		{
+			case LOG_EMERG: 
+				strcpy(szLogType, STR_LOG_EMERG);
+				break;
+			case LOG_ALERT:
+				strcpy(szLogType, STR_LOG_ALERT);
+				break;
+			case LOG_ERR:
+				strcpy(szLogType, STR_LOG_ERR);
+				break;
+			case LOG_WARNING:
+				strcpy(szLogType, STR_LOG_WARNING);
+				break;
+			case LOG_NOTICE:
+				strcpy(szLogType, STR_LOG_NOTICE);
+				break;
+			case LOG_INFO:
+				strcpy(szLogType, STR_LOG_INFO);
+				break;
+			case LOG_DEBUG:
+				strcpy(szLogType, STR_LOG_DEBUG);
+				break;
+			default:
+				strcpy(szLogType, STR_LOG_UNKNOWN);
+		}
 	va_start(vararg, format);
 
 	tBytes = vsnprintf(str, sizeof(str), format, vararg);
@@ -96,20 +123,12 @@ int CLogClient::Log(int nNeededVerbosity, char *format, ...)
 			str[tBytes] = 0;
 		}
 	va_end(vararg);
+/*	snprintf(str, sizeof(str), "%s: %s", szLogType, str);
 	if (str[strlen(str) - 1] != '\n')
 		{
 			strcat(str, "\n");
 		}
-	char szDateTime[512];
-	char szTime[256];
-	GetLocalDateAsString(szDateTime, sizeof(szDateTime));
-	strcat(szDateTime, " at ");
-	GetLocalTimeAsString(szTime, sizeof(szTime));
-	strcat(szDateTime, szTime);
-	strcat(szDateTime, " : ");
-	send(nClientSocket, szDateTime, strlen(szDateTime) + 1, 0);
+	snprintf(str, sizeof(str), "(%d) %s", getpid(), str); */
 	send(nClientSocket, str, strlen(str) + 1, 0);
-//	fputs(szDateTime, LogFile);
-//	fputs(str, LogFile);
 	return 0;
 }

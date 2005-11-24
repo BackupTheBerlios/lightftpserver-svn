@@ -28,7 +28,7 @@ void SignalHandler(int nSignal)
 		{
 			case SIGINT:
 			case SIGTERM:
-				printf("Received terminate signal, exiting ...\n");
+				printf("Received termination signal, exiting ...\n");
 				logServer.LogServerDestroy();
 				break;
 		}

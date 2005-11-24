@@ -89,7 +89,7 @@ sockaddr_in CreateSocketAddress(sa_family_t family, int port, char *host)
 	return tmp;
 }
 
-void DebugMessage(char *format, ...)
+void DebugMessage(const char *format, ...)
 {
 #ifdef SHOW_DEBUG_MESSAGES
 	char str[4096];
@@ -109,7 +109,13 @@ void DebugMessage(char *format, ...)
 		}
 	char szDateTime[512];
 	char szTime[256];
+	GetLocalDateAsString(szDateTime, sizeof(szDateTime));
+	strcat(szDateTime, " at ");
+	GetLocalTimeAsString(szTime, sizeof(szTime));
+	strcat(szDateTime, szTime);
+	strcat(szDateTime, " : ");
+	printf("%s", szDateTime);
+	
 	printf("%s", str);
 #endif
 }
-

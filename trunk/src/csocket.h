@@ -18,78 +18,39 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef FTP_LOGGER_H
-#define FTP_LOGGER_H
+#ifndef CHAT_SOCKET_H
+#define CHAT_SOCKET_H
 
 #include "commonheaders.h"
-#include "utils.h"
 
-#define LOGSERVER_PORT 54345
-#define LOGSERVER_CLIENTS 64
+#define FALSE 0 
+#define TRUE 1
 
-#define LOGSERVER_LINE_SIZE 4096
-
-#define LOG_EMERG     1
-#define LOG_ALERT     2
-#define LOG_ERR       4
-#define LOG_WARNING   8
-#define LOG_NOTICE   16
-#define LOG_INFO     32
-#define LOG_DEBUG    64
-
-#define LOG_FTP     256
-
-#define STR_LOG_EMERG    "!EMERGENCY!"
-#define STR_LOG_ALERT    "!ALERT    !"
-#define STR_LOG_ERR      "!ERROR    !"
-#define STR_LOG_WARNING  "!WARNING  !"
-#define STR_LOG_NOTICE   "|NOTICE   |"
-#define STR_LOG_INFO     "|INFO     |"
-#define STR_LOG_DEBUG    "|DEBUG    |"
-#define STR_LOG_UNKNOWN  "[Unknown  ]"
-
-
-class CLogServer{
+class CSocket{
 	protected:
-		int nServerSocket;
-//		int nServerPID;
-		char *szFileName;
+		char bConnected;
+//		char szHost[64];
+//		int nPort;
+		int nSyncronous;
+		int nSocket;
+		int nSocketError;
 		
-		int nServerPort;
-		int nMaxClients;
 		
-		int WaitForMessages(int nClientSocket);
-		int WriteLogMessage(char *message, int size, char bWriteHeader);
-		
-		int StartLogServer();
-		int StopLogServer();
 	public:
-		/**
-		\todo write doc
-		*/
-		CLogServer(char *szLogFileName);
+		CSocket(int domain = PF_INET, int type = SOCK_STREAM, int protocol = 0);
+		~CSocket();
 		
-		/**
-		\todo write doc
-		*/
-		~CLogServer();
+		int Bind(sa_family_t family, int port, char *host);
+		CSocket *Accept();
+		int Listen(int nQueueSize);
+		int Connect(sa_family_t family, int port, char *host);
+		int Receive(void *message, size_t length, int flags = 0);
+		int Send(const void *message, size_t length, int flags = 0);
+		int Disconnect(int how = SHUT_RDWR);
+		int Close();
 		
-		/**
-		This function initialized the logging server.
-		
-		\sa LogServerDestroy, Log
-		*/
-		int LogServerInit();
-		
-		/**
-		Closes the logging server
-		\sa LogServerInit, Log
-		*/
-		int LogServerDestroy();
-		
-		int LogServerRun();
+		char IsConnected();
+		int GetLastError();
 };
-//extern int loggingSeverSocket;
-//extern int loggingServerPID;
 
 #endif

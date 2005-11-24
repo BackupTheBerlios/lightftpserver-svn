@@ -75,6 +75,6 @@ sockaddr_in CreateSocketAddress(sa_family_t family, int port, char *host);
 /**
 \todo write doc
 */
-void DebugMessage(char *format, ...);
+void DebugMessage(const char *format, ...);
 
 #endif //ifdef

@@ -35,7 +35,7 @@ class CLogClient{
 		~CLogClient();
 		int LogClientInit();
 		int LogClientDestroy();
-		int Log(int nNeededVerbosity, char *format, ...);
+		int Log(int nNeededVerbosity, int params, char *format, ...);
 		
 		void SetVerbosity(int nNewVerbosity);
 		int GetVerbosity();
