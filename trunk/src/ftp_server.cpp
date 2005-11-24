@@ -54,7 +54,7 @@ int main()
   int rcode, i, listenfd, connfd, len;
   struct sockaddr_in addr;
   
-  //daemonization
+  //daemonization >:|
   rcode = fork();
   if (rcode == -1) {
     syslog(LOG_FTP|LOG_ERR, "daemonization stage 1 %m");
