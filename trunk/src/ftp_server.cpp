@@ -54,6 +54,7 @@ int main()
   int rcode, i, listenfd, connfd, len;
   struct sockaddr_in addr;
   
+  //daemonization fuck me
   //new daemonization >:|
   rcode = spoon();
   if (rcode == -1) {
