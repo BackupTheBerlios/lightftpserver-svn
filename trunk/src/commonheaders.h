@@ -40,6 +40,8 @@ Commonheaders.h long description.
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <fcntl.h>
+
 //process command stuff
 #include <signal.h>
 

@@ -111,3 +111,12 @@ int CSocket::Receive(void *message, size_t length, int flags)
 	nSocketError = errno;
 	return res;
 }
+
+int CSocket::Blocking(int newState)
+{
+	int tmp = fcntl(nSocket, F_GETFL);
+	tmp = (newState) ? tmp & (~O_NONBLOCK) : tmp & O_NONBLOCK; //need to recheck this
+	int res = fcntl(nSocket, F_SETFL, tmp);
+	nSocketError = errno;
+	return res;
+}

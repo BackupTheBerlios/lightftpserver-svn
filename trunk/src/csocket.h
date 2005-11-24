@@ -47,6 +47,7 @@ class CSocket{
 		int Receive(void *message, size_t length, int flags = 0);
 		int Send(const void *message, size_t length, int flags = 0);
 		int Disconnect(int how = SHUT_RDWR);
+		int Blocking(int newState);
 		int Close();
 		
 		char IsConnected();
