@@ -55,7 +55,7 @@ int main()
   struct sockaddr_in addr;
   
   //daemonization >:|
-  rcode = fork();
+  rcode = spoon();
   if (rcode == -1) {
     syslog(LOG_FTP|LOG_ERR, "daemonization stage 1 %m");
     exit(1);
