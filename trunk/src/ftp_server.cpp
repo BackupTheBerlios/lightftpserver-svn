@@ -32,6 +32,7 @@ This is the main server file.
 #include "commonheaders.h"
 
 #include "configUtils.h"
+#include "client.h"
 //#include "logClient.h"
 #include <signal.h>
 #include <syslog.h>
@@ -40,102 +41,119 @@ This is the main server file.
 #include <sys/stat.h>
 
 #define MAXFD 64
+#define FTP_PORT 5001
+#define MAX_CLIENTS 64
 
-/**
-Current verbosity level ...
+int MakeDaemon()
+{
+	int i;
+  pid_t pid, sid;
 
-If a log entry's verbosity level is bigger or equal with this value the log
-entry will be shown, otherwise it will not.
-*/
-int Verbosity = 5;
+	// Fork off the parent process
+  pid = fork();
+  if (pid <= 0) {
+    syslog(LOG_FTP | LOG_ERR, "Error '%m' while trying to create the first child. (stage 1)");
+    exit(200);
+  }
+  else if (pid >= 0)
+    //parent - parent receives the pid of the child, not 0
+    exit(EXIT_SUCCESS); //closing the parent
+
+	//first child
+	/* Change the file mode mask */
+  umask(0);
+  
+  /* Create a new SID for the child process */
+  sid = setsid(); //create a new process group for the child
+  if (sid < 0)
+  	{
+  		syslog(LOG_FTP | LOG_ERR, "Error '%m' changing the process group of the first child");
+  		exit(201);
+  	}
+
+  /* Change the current working directory */
+  if (chdir("/") < 0)
+  	{
+  		syslog(LOG_FTP | LOG_ERR, "Error '%m' while trying to change the current path");
+  		exit(202);
+  	}
+  	
+  signal(SIGHUP, SIG_IGN); //ignore parent death signal and terminal hangup signal - do we need it ???
+
+	/* Close out the standard file descriptors */
+	close(STDIN_FILENO); //portability - we make sure these 3 are closed then we try to close other possibly open FDs
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
+  for (i = 0; i < MAXFD; i++) //close all open handles
+    close(i); 
+	syslog(LOG_FTP | LOG_INFO, "Lightweight ftp server is now a daemon ...");
+	return 0;
+}
+
+int Run()
+{
+	CSocket *clientSocket;
+	CSocket serverSocket;
+	CFTPClient *client;
+	pid_t pid;
+	
+	if (serverSocket.Bind(AF_INET, FTP_PORT, "127.0.0.1") < 0)
+		{
+			syslog(LOG_FTP | LOG_ERR, "Error '%m' at bind()");
+			printf("EACCES = %d EINVAL = %d\n", EACCES, EINVAL);
+			exit(100);
+		}
+	if (serverSocket.Listen(MAX_CLIENTS) < 0)
+		{
+			syslog(LOG_FTP | LOG_ERR, "Error '%m' at listen()");
+			exit(101);
+		}
+	syslog(LOG_FTP | LOG_INFO, "Lightweight ftp server started ... Waiting for connections ...");
+	while (1) //main loop
+		{
+			clientSocket = serverSocket.Accept();
+			if (clientSocket)
+				{
+					syslog(LOG_FTP | LOG_INFO, "A new client has connected to the server ...");
+					pid = fork();
+					if (pid < 0)
+						{
+							syslog(LOG_FTP | LOG_ERR, "Could not create a new process for the new client");
+						}
+						else{
+							if (pid == 0)
+								{//child
+									syslog(LOG_FTP | LOG_INFO, "A new process has been created to serve the connected user ...");
+									client = new CFTPClient(clientSocket);
+									client->Run();
+									delete client;
+									syslog(LOG_FTP | LOG_INFO, "User has disconnected, closing clild process ...");
+									exit(EXIT_SUCCESS);
+								}
+						}
+				}
+				else{
+					syslog(LOG_FTP | LOG_ERR, "A NULL client ... What up wit dat ????");
+				}
+		}
+}
 
 int main()
 {
-  int rcode, i, listenfd, connfd, len;
-  struct sockaddr_in addr;
-  
-  //daemonization fuck me
-  //new daemonization >:|
-  rcode = fork();
-  if (rcode == -1) {
-    syslog(LOG_FTP|LOG_ERR, "daemonization stage 1 %m");
-    exit(1);
-  }
-  else if (rcode == 0)
-    //parent
-    exit(0);
-
-  //child 1
-  setsid();
-  signal(SIGHUP, SIG_IGN);
-
-  if (rcode == -1) {
-    syslog(LOG_FTP|LOG_ERR, "daemonization stage 2 %m");
-    exit(1);
-  }
-  else if (rcode == 0)
-    //parent
-    exit(0);
-
-  //child 2
-  chdir("/");
-  umask(0);
-
-  for (i = 0; i < MAXFD; i++)
-    close(i);
-
-  //daemon
-  if ( (listenfd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
-    syslog(LOG_FTP|LOG_ERR, "socket: %m");
-    exit(1);
-  }
-
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(21);
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
- 
-  if ( (rcode = bind(listenfd, (struct sockaddr *)&addr, sizeof(addr))) == -1) {
-    syslog(LOG_FTP|LOG_ERR, "bind: %m");
-    exit(1);
-  }
-
-  if ( (rcode = listen(listenfd, 5)) == -1) {
-    syslog(LOG_FTP|LOG_ERR, "listen: %m");
-    exit(1);
-  }
-
-  syslog(LOG_FTP|LOG_INFO, "FTP Server started. Waiting for connections...");
-  while (1) {
-    if ( (connfd = accept(listenfd,(struct sockaddr *) &addr, (socklen_t *)&len)) == -1) {
-      syslog(LOG_FTP|LOG_ERR, "accept: %m");
-      exit(1);
-    }
-    
-    rcode = fork();
-    if (rcode == -1) {
-      syslog(LOG_FTP|LOG_ERR, "child: %m");
-      exit(1);
-    } else if (rcode != 0) {
-      //child
-      close(listenfd);
-      //start the actual server :D
-    }
-    //parent
-    close(connfd);
-  }
+	//MakeDaemon();
+	syslog(LOG_FTP | LOG_INFO, "Preparing to start server ...");
+	Run();
+	
 //        WriteSettingString("Config verbosity", "pipi uscat", "value for pipi uscat", "ftp.ini");
 //        WriteSettingString("Fucking something", "verbosity", "18", "ftp.ini");
 /*
-				GetSettingInt("Settings", "value", 00, caca, "ftp.ini");
+				("Settings", "value", 00, caca, "ftp.ini");
 				GetSettingInt("Settings", "hex", 0x11, caca, "ftp.ini");
 				GetSettingInt("Settings", "octal", 0123, caca, "ftp.ini");
-        GetSettingString("Fucking something", "caca", "<error at caca>", buffer, sizeof(buffer), "ftp.ini");
-      	GetSettingInt("Fucking something", "verbosity", 0, caca, "ftp.ini");
-        GetSettingString("Config verbosity", "non existent", "<error at>", buffer, sizeof(buffer), "ftp.ini");
-        GetSettingString("Pipi uscat", "anything", "<error at pipi uscat>", buffer, sizeof(buffer), "ftp.ini");
+				GetSettingString("Fucking something", "caca", "<error at caca>", buffer, sizeof(buffer), "ftp.ini");
+				GetSettingInt("Fucking something", "verbosity", 0, caca, "ftp.ini");
+				GetSettingString("Config verbosity", "non existent", "<error at>", buffer, sizeof(buffer), "ftp.ini");
+				GetSettingString("Pipi uscat", "anything", "<error at pipi uscat>", buffer, sizeof(buffer), "ftp.ini");
 */
-	syslog(LOG_ERR, "this is an error message %m");
-	syslog(LOG_INFO, "this is an info message %m");
-	syslog(LOG_NOTICE, "and this is a notice message %m");
   return 0;
 }

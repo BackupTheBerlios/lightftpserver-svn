@@ -46,5 +46,6 @@ Commonheaders.h long description.
 #include <signal.h>
 
 #include "utils.h"
+#include "csocket.h"
 
 #endif

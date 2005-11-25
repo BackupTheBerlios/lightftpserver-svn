@@ -80,6 +80,11 @@ char *StrTrim(char *szText, const char *szTrimChars)
         return szText;
 }
 
+void ZeroMemory(void *data, size_t len)
+{
+	memset(data, 0, len);
+}
+
 sockaddr_in CreateSocketAddress(sa_family_t family, int port, char *host)
 {
 	sockaddr_in tmp = {0};

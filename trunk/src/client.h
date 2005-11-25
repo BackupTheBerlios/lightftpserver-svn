@@ -21,24 +21,34 @@
 #ifndef CHAT_CLIENT_H
 #define CHAT_CLIENT_H
 
+#include "commonheaders.h"
+
+#define DISCONNECT_DATA          1
+#define DISCONNECT_COMMAND       2
+#define DISCONNECT_DATA_COMMAND  DISCONNECT_DATA | DISCONNECT_COMMAND
+
 //needs work
-class CClient{
+class CFTPClient{
 	protected:
 		char *szCurrentPath;
 		int nMode;
 		int nType;
 		int nStructure;
 		int nPathSize;
-		int dataSocket;
-		int commandSocket;
 		int connected;
+		CSocket *commandSocket;
+		CSocket *dataSocket;
+		
+		int WaitForMessage(char *buffer, int &size);
+		int TranslateMessage(char *buffer);
 		
 	public:
-		CClient();
-		CClient(int commandSocket);
-		~CClient();
-		int Connect(char *address, int port);
-		int Disconnect();
+		CFTPClient(CSocket *commandSocket);
+		~CFTPClient();
+		void Clear();
+		int Run();
+		//int Connect(char *address, int port);
+		int Disconnect(int part = DISCONNECT_DATA_COMMAND);
 		
 		char *GetCurrentPath();
 		void SetCurrentPath(char *newPath);

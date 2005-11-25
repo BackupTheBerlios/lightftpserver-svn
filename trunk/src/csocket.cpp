@@ -26,6 +26,7 @@ CSocket::CSocket(int domain, int type, int protocol)
 	bConnected = FALSE;
 	nSocket = socket(domain, type, protocol);
 	nSocketError = errno;
+	ZeroMemory(&addrData, sizeof(addrData));
 }
 
 
@@ -56,8 +57,8 @@ char CSocket::IsConnected()
 
 int CSocket::Bind(sa_family_t family, int port, char *host)
 {
-	sockaddr_in tmp = CreateSocketAddress(family, port, host);
-	int res = bind(nSocket, (sockaddr *) &tmp, sizeof(tmp));
+	addrData = CreateSocketAddress(family, port, host);
+	int res = bind(nSocket, (sockaddr *) &addrData, sizeof(addrData));
 	nSocketError = errno;
 	return res;
 }
@@ -73,9 +74,9 @@ CSocket *CSocket::Accept()
 {
 	int res;
 	CSocket *tmp;
-	
 	sockaddr addr;
 	socklen_t size;
+	
 	res = accept(nSocket, &addr, &size);
 	nSocketError = errno;
 	if (res > 0)
@@ -83,6 +84,7 @@ CSocket *CSocket::Accept()
 			tmp = new CSocket();
 			tmp->Close();
 			tmp->nSocket = res;
+			memmove(&(tmp->addrData), &addr, sizeof(addrData));
 		}
 		else{
 			tmp = NULL;
@@ -105,6 +107,11 @@ int CSocket::Send(const void *message, size_t length, int flags)
 	return res;
 }
 
+int CSocket::Send(const char *message, int flags)
+{
+	Send(message, strlen(message) + 1, flags);
+}
+
 int CSocket::Receive(void *message, size_t length, int flags)
 {
 	int res = recv(nSocket, message, length, flags);
@@ -115,8 +122,20 @@ int CSocket::Receive(void *message, size_t length, int flags)
 int CSocket::Blocking(int newState)
 {
 	int tmp = fcntl(nSocket, F_GETFL);
-	tmp = (newState) ? tmp & (~O_NONBLOCK) : tmp & O_NONBLOCK; //need to recheck this
+	tmp = (newState) ? tmp & (~O_NONBLOCK) : tmp | O_NONBLOCK; //need to recheck this
 	int res = fcntl(nSocket, F_SETFL, tmp);
 	nSocketError = errno;
 	return res;
 }
+
+
+int CSocket::Port()
+{
+	return ntohs(addrData.sin_port);
+}
+
+char *CSocket::Host()
+{
+	return inet_ntoa(addrData.sin_addr);
+}
+

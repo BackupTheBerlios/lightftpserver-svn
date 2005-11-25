@@ -66,6 +66,10 @@ char *GetLocalDateTimeAsString(char *szDateTime, size_t size);
 */
 char *StrTrim(char *szText, const char *szTrimChars);
 
+/**
+\todo write doc
+*/
+void ZeroMemory(void *data, size_t len);
 
 /**
 \todo write doc

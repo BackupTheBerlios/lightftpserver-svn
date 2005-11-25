@@ -34,6 +34,7 @@ class CSocket{
 		int nSyncronous;
 		int nSocket;
 		int nSocketError;
+		sockaddr_in addrData;
 		
 		
 	public:
@@ -46,11 +47,14 @@ class CSocket{
 		int Connect(sa_family_t family, int port, char *host);
 		int Receive(void *message, size_t length, int flags = 0);
 		int Send(const void *message, size_t length, int flags = 0);
+		int Send(const char *message, int flags = 0);
 		int Disconnect(int how = SHUT_RDWR);
 		int Blocking(int newState);
 		int Close();
 		
 		char IsConnected();
+		char *Host();
+		int Port();
 		int GetLastError();
 };
 

@@ -22,51 +22,75 @@
 #include "commonheaders.h"
 
 
-CClient::CClient()
-{
-	///\todo do constructor
-	connected = 0;
-	nPathSize = 0;
-	szCurrentPath = NULL;
-}
-
-CClient::CClient(int commandSocket)
+CFTPClient::CFTPClient(CSocket *commandSocket)
 {
 	///\todo do constructor
 	connected = 0;
 	nPathSize = 0;
 	szCurrentPath = NULL;
 	this->commandSocket = commandSocket;
+	dataSocket = NULL;
 }
 
-CClient::~ CClient()
+CFTPClient::~ CFTPClient()
 {
 	///\todo do destructor
 	Disconnect();
+	Clear();
+}
+
+void CFTPClient::Clear()
+{
+	connected = 0;
 	if (szCurrentPath)
 		{
 			free(szCurrentPath);
 		}
-	connected = 0;
+	if (commandSocket)
+		{
+			delete commandSocket;
+		}
+	if (dataSocket)
+		{
+			delete dataSocket;
+		}
 }
 
-int CClient::Connect(char *address, int port)
+/**
+This is the main ftp client function. Here we receive all the commands, send the requested data ...
+*/
+int CFTPClient::Run()
 {
-	///\todo do connection
-	connected = 1;
+	commandSocket->Send("Welcome to Light ftp server ...\n");
+	commandSocket->Send("Thanks for using Light ftp server ...\n");
+	Disconnect();
 }
 
-int CClient::Disconnect()
+int CFTPClient::Disconnect(int part)
 {
 	///\todo do disconnection
+	if (part & DISCONNECT_DATA)
+		{
+			if (dataSocket)
+				{
+					dataSocket->Disconnect();
+				}
+		}
+	if (part & DISCONNECT_COMMAND)
+		{
+			if (commandSocket)
+				{
+					commandSocket->Disconnect();
+				}
+		}
 }
 
-char *CClient::GetCurrentPath()
+char *CFTPClient::GetCurrentPath()
 {
 	return szCurrentPath;
 }
 
-void CClient::SetCurrentPath(char *newPath)
+void CFTPClient::SetCurrentPath(char *newPath)
 {
 	int len = strlen(newPath) + 1;
 	if (nPathSize < len) //if we don't have enough allocated memory to store the new string
