@@ -101,3 +101,18 @@ void CFTPClient::SetCurrentPath(char *newPath)
 	strcpy(szCurrentPath, newPath); //copy the new string
 }
 
+
+/*************************HANDLER MEMBER FUNCTIONS****************************/
+
+int CFTPClient::HandleHelpCommand(TParam1 param1, TParam2 param2)
+{
+}
+
+int CFTPClient::HandleListCommand(TParam1 param1, TParam2 param2)
+{
+}
+
+int CFTPClient::HandleStatCommand(TParam1 param1, TParam2 param2)
+{
+}
+

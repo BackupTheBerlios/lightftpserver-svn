@@ -18,50 +18,20 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef CHAT_CLIENT_H
-#define CHAT_CLIENT_H
+#include "callback.h"
 
-#include "commonheaders.h"
+int TMethodCallback::operator()(TParam1 param1, TParam2 param2)
+{
+	if (instance)
+		{
+			(instance->*callback)(param1, param2);
+		}
+}
 
-#define DISCONNECT_DATA          1
-#define DISCONNECT_COMMAND       2
-#define DISCONNECT_DATA_COMMAND  DISCONNECT_DATA | DISCONNECT_COMMAND
-
-typedef long long TParam1;
-typedef long TParam2;
-
-//needs work
-class CFTPClient{
-	protected:
-		char *szCurrentPath;
-		int nMode;
-		int nType;
-		int nStructure;
-		int nPathSize;
-		int connected;
-		CSocket *commandSocket;
-		CSocket *dataSocket;
-		
-		int WaitForMessage(char *buffer, int &size);
-		int TranslateMessage(char *buffer);
-		
-	public:
-		CFTPClient(CSocket *commandSocket);
-		~CFTPClient();
-		void Clear();
-		int Run();
-		//int Connect(char *address, int port);
-		int Disconnect(int part = DISCONNECT_DATA_COMMAND);
-		
-		char *GetCurrentPath();
-		void SetCurrentPath(char *newPath);
-		
-		
-//	private:
-		int HandleHelpCommand(TParam1 param1, TParam2 param2);
-		int HandleListCommand(TParam1 param1, TParam2 param2);
-		int HandleStatCommand(TParam1 param1, TParam2 param2);
-};
-
-
-#endif
+TMethodCallback Binder(MessageCallback callback, CFTPClient *instance)
+{
+	TMethodCallback tmp;
+	tmp.instance = instance;
+	tmp.callback = callback;
+	return tmp;
+}

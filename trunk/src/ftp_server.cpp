@@ -143,6 +143,7 @@ int main()
 	//MakeDaemon();
 	syslog(LOG_FTP | LOG_INFO, "Preparing to start server ...");
 	Run();
+	//test
 	
 //        WriteSettingString("Config verbosity", "pipi uscat", "value for pipi uscat", "ftp.ini");
 //        WriteSettingString("Fucking something", "verbosity", "18", "ftp.ini");

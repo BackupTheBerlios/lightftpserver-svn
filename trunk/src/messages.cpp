@@ -18,50 +18,29 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef CHAT_CLIENT_H
-#define CHAT_CLIENT_H
+#include "messages.h"
 
-#include "commonheaders.h"
-
-#define DISCONNECT_DATA          1
-#define DISCONNECT_COMMAND       2
-#define DISCONNECT_DATA_COMMAND  DISCONNECT_DATA | DISCONNECT_COMMAND
-
-typedef long long TParam1;
-typedef long TParam2;
-
-//needs work
-class CFTPClient{
-	protected:
-		char *szCurrentPath;
-		int nMode;
-		int nType;
-		int nStructure;
-		int nPathSize;
-		int connected;
-		CSocket *commandSocket;
-		CSocket *dataSocket;
-		
-		int WaitForMessage(char *buffer, int &size);
-		int TranslateMessage(char *buffer);
-		
-	public:
-		CFTPClient(CSocket *commandSocket);
-		~CFTPClient();
-		void Clear();
-		int Run();
-		//int Connect(char *address, int port);
-		int Disconnect(int part = DISCONNECT_DATA_COMMAND);
-		
-		char *GetCurrentPath();
-		void SetCurrentPath(char *newPath);
-		
-		
-//	private:
-		int HandleHelpCommand(TParam1 param1, TParam2 param2);
-		int HandleListCommand(TParam1 param1, TParam2 param2);
-		int HandleStatCommand(TParam1 param1, TParam2 param2);
-};
+int TMessage::operator()(TParam1 param1, TParam2 param2)
+{
+	callbackMethod(param1, param2);
+}
 
 
-#endif
+int InitMessage(TMessage &message, int code, char szMessage[MESSAGE_SIZE], TMethodCallback callback)
+{
+	message.code = code;
+	strncpy(message.message, szMessage, MESSAGE_SIZE);
+	message.callbackMethod = callback;
+	return 0;
+}
+
+int InitializeMessages(TMessage *&messages, int &count, CFTPClient *clientInstance)
+{
+	int size = 3; //we have to know how many messages we know about
+	messages = (TMessage *) malloc(size * sizeof(TMessage)); //allocate enough space for them
+	//and then fill them one by one :(
+	InitMessage(messages[0], MESSAGE_HELP, "help", Binder(&CFTPClient::HandleHelpCommand, clientInstance));
+	InitMessage(messages[1], MESSAGE_LIST, "list", Binder(&CFTPClient::HandleListCommand, clientInstance));
+	InitMessage(messages[2], MESSAGE_STAT, "stat", Binder(&CFTPClient::HandleStatCommand, clientInstance));
+}
+
