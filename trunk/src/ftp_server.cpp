@@ -37,12 +37,26 @@ This is the main server file.
 #include <signal.h>
 #include <syslog.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include <sys/stat.h>
 
 #define MAXFD 64
 #define FTP_PORT 5001
 #define MAX_CLIENTS 64
+
+void HandleTerminationSignals(int nSignal)
+{
+	switch (nSignal)
+		{
+			case SIGQUIT:
+			case SIGINT:
+			case SIGTERM:
+				syslog(LOG_FTP | LOG_INFO, "Received termination signal, exiting ...");
+				exit(EXIT_SUCCESS);
+		}
+}
 
 int MakeDaemon()
 {
@@ -51,11 +65,11 @@ int MakeDaemon()
 
 	// Fork off the parent process
   pid = fork();
-  if (pid <= 0) {
+  if (pid < 0) {
     syslog(LOG_FTP | LOG_ERR, "Error '%m' while trying to create the first child. (stage 1)");
     exit(200);
   }
-  else if (pid >= 0)
+  else if (pid > 0)
     //parent - parent receives the pid of the child, not 0
     exit(EXIT_SUCCESS); //closing the parent
 
@@ -88,6 +102,14 @@ int MakeDaemon()
     close(i); 
 	syslog(LOG_FTP | LOG_INFO, "Lightweight ftp server is now a daemon ...");
 	return 0;
+}
+
+int HookTerminationSignals()
+{
+	syslog(LOG_FTP | LOG_INFO, "Hooking signals ...");
+	signal(SIGQUIT, HandleTerminationSignals);
+	signal(SIGTERM, HandleTerminationSignals);
+	signal(SIGINT, HandleTerminationSignals);
 }
 
 int Run()
@@ -135,12 +157,14 @@ int Run()
 				else{
 					syslog(LOG_FTP | LOG_ERR, "A NULL client ... What up wit dat ????");
 				}
+			waitpid(0, NULL, WNOHANG); //look for any zobie processes and clear them
 		}
 }
 
 int main()
 {
-	//MakeDaemon();
+	MakeDaemon();
+	HookTerminationSignals();
 	syslog(LOG_FTP | LOG_INFO, "Preparing to start server ...");
 	Run();
 	//test

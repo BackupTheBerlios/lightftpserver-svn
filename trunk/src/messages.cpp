@@ -39,8 +39,8 @@ int InitializeMessages(TMessage *&messages, int &count, CFTPClient *clientInstan
 	int size = 3; //we have to know how many messages we know about
 	messages = (TMessage *) malloc(size * sizeof(TMessage)); //allocate enough space for them
 	//and then fill them one by one :(
-	InitMessage(messages[0], MESSAGE_HELP, "help", Binder(&CFTPClient::HandleHelpCommand, clientInstance));
-	InitMessage(messages[1], MESSAGE_LIST, "list", Binder(&CFTPClient::HandleListCommand, clientInstance));
-	InitMessage(messages[2], MESSAGE_STAT, "stat", Binder(&CFTPClient::HandleStatCommand, clientInstance));
+	InitMessage(messages[0], CMD_HELP, "help", Binder(&CFTPClient::HandleHelpCommand, clientInstance));
+	InitMessage(messages[1], CMD_LIST, "list", Binder(&CFTPClient::HandleListCommand, clientInstance));
+	InitMessage(messages[2], CMD_STAT, "stat", Binder(&CFTPClient::HandleStatCommand, clientInstance));
 }
 

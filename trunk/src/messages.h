@@ -25,10 +25,10 @@
 
 #define MESSAGE_SIZE 64
 
-enum MessageCodes{
-	MESSAGE_HELP,
-	MESSAGE_LIST,
-	MESSAGE_STAT
+enum CommandCodes{
+	CMD_HELP,
+	CMD_LIST,
+	CMD_STAT
 };
 
 struct TMessage{
