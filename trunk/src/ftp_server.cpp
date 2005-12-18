@@ -48,7 +48,7 @@ This is the main server file.
 
 void HandleTerminationSignals(int nSignal)
 {
-	switch (nSignal)
+	switch (nSignal) //received singal
 		{
 			case SIGQUIT:
 			case SIGINT:
