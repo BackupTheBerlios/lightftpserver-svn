@@ -1,7 +1,7 @@
 /**
-The main file.
+   The main file.
 
-Long description of the main file.
+   Long description of the main file.
 */
 
 /***************************************************************************
@@ -25,7 +25,7 @@ Long description of the main file.
  ***************************************************************************/
 
 /*
-This is the main server file.
+  This is the main server file.
 */
 
 //this file is in the include folder, not the src one so we need to include accordingly
@@ -34,36 +34,56 @@ This is the main server file.
 #include "configUtils.h"
 #include "client.h"
 //#include "logClient.h"
+#include <inttypes.h>
+#include <netdb.h>
 #include <signal.h>
+#include <stdint.h>
+#include <string.h>
 #include <syslog.h>
+
 #include <time.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 #include <sys/stat.h>
 
-#define MAXFD 64
-#define FTP_PORT 5001
 #define MAX_CLIENTS 64
+#define BUF_SIZE 1024
+
+char cr = 13, lf = 10;
 
 void HandleTerminationSignals(int nSignal)
 {
-	switch (nSignal) //received singal
-		{
-			case SIGQUIT:
-			case SIGINT:
-			case SIGTERM:
-				syslog(LOG_FTP | LOG_INFO, "Received termination signal, exiting ...");
-				exit(EXIT_SUCCESS);
-		}
+  switch (nSignal) //received singal
+    {
+    case SIGQUIT:
+    case SIGINT:
+    case SIGTERM:
+      syslog(LOG_FTP | LOG_INFO, "Received termination signal, exiting ...");
+      exit(EXIT_SUCCESS);
+    }
+}
+void HandleChildTermination(int nSignal)
+{
+  int stat;
+  wait(&stat);
+  syslog(LOG_FTP | LOG_INFO, "slave exited with status: %d", stat);
+}
+int HookTerminationSignals()
+{
+  signal(SIGQUIT, HandleTerminationSignals);
+  signal(SIGTERM, HandleTerminationSignals);
+  signal(SIGINT, HandleTerminationSignals);
+  signal(SIGCHLD, HandleChildTermination);
 }
 
-int MakeDaemon()
+void MakeDaemon()
 {
-	int i;
-  pid_t pid, sid;
+  int i;
+  pid_t pid;
 
-	// Fork off the parent process
+  // Fork off the parent process
   pid = fork();
   if (pid < 0) {
     syslog(LOG_FTP | LOG_ERR, "Error '%m' while trying to create the first child. (stage 1)");
@@ -72,113 +92,252 @@ int MakeDaemon()
   else if (pid > 0)
     //parent - parent receives the pid of the child, not 0
     exit(EXIT_SUCCESS); //closing the parent
+  //child
 
-	//first child
-	/* Change the file mode mask */
-  umask(0);
+  umask(022);
   
   /* Create a new SID for the child process */
-  sid = setsid(); //create a new process group for the child
-  if (sid < 0)
-  	{
-  		syslog(LOG_FTP | LOG_ERR, "Error '%m' changing the process group of the first child");
-  		exit(201);
-  	}
+  if (setsid() == -1)
+    {
+      syslog(LOG_FTP | LOG_ERR, "Error '%m' changing the process group of the first child");
+      exit(201);
+    }
 
   /* Change the current working directory */
   if (chdir("/") < 0)
-  	{
-  		syslog(LOG_FTP | LOG_ERR, "Error '%m' while trying to change the current path");
-  		exit(202);
-  	}
-  	
-  signal(SIGHUP, SIG_IGN); //ignore parent death signal and terminal hangup signal - do we need it ???
+    {
+      syslog(LOG_FTP | LOG_ERR, "Error '%m' while trying to change the current path");
+      exit(202);
+    }
 
-	/* Close out the standard file descriptors */
-	close(STDIN_FILENO); //portability - we make sure these 3 are closed then we try to close other possibly open FDs
-	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
-  for (i = 0; i < MAXFD; i++) //close all open handles
+  // close all open handles
+  for (i = getdtablesize() - 1; i >= 0; i--)
     close(i); 
-	syslog(LOG_FTP | LOG_INFO, "Lightweight ftp server is now a daemon ...");
-	return 0;
+
+  syslog(LOG_FTP | LOG_INFO, "Lightweight ftp server is now a daemon ...");
 }
 
-int HookTerminationSignals()
-{
-	syslog(LOG_FTP | LOG_INFO, "Hooking signals ...");
-	signal(SIGQUIT, HandleTerminationSignals);
-	signal(SIGTERM, HandleTerminationSignals);
-	signal(SIGINT, HandleTerminationSignals);
+
+
+int activeTCPLowLevel(u_int32_t address, u_int16_t port) {
+  struct sockaddr_in server_addr;
+  int asock;
+
+  // fill the address structure
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = port;
+  server_addr.sin_addr.s_addr = address;
+  // create the socket
+  if ( (asock = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+    syslog(LOG_FTP|LOG_ERR, "activeTCPLowLevel: socket: %m");
+    exit(1);
+  }
+  // connect to the remote host
+  if (connect(asock, (sockaddr*)&server_addr, sizeof(server_addr)) == -1)  {
+    syslog(LOG_FTP|LOG_ERR, "activeTCPLowLevel: connect: %m");
+    exit(1);
+  }
+  return asock;
 }
 
-int Run()
-{
-	CSocket *clientSocket;
-	CSocket serverSocket;
-	CFTPClient *client;
-	pid_t pid;
-	
-	if (serverSocket.Bind(AF_INET, FTP_PORT, "127.0.0.1") < 0)
-		{
-			syslog(LOG_FTP | LOG_ERR, "Error '%m' at bind()");
-			printf("EACCES = %d EINVAL = %d\n", EACCES, EINVAL);
-			exit(100);
-		}
-	if (serverSocket.Listen(MAX_CLIENTS) < 0)
-		{
-			syslog(LOG_FTP | LOG_ERR, "Error '%m' at listen()");
-			exit(101);
-		}
-	syslog(LOG_FTP | LOG_INFO, "Lightweight ftp server started ... Waiting for connections ...");
-	while (1) //main loop
-		{
-			clientSocket = serverSocket.Accept();
-			if (clientSocket)
-				{
-					syslog(LOG_FTP | LOG_INFO, "A new client has connected to the server ...");
-					pid = fork();
-					if (pid < 0)
-						{
-							syslog(LOG_FTP | LOG_ERR, "Could not create a new process for the new client");
-						}
-						else{
-							if (pid == 0)
-								{//child
-									syslog(LOG_FTP | LOG_INFO, "A new process has been created to serve the connected user ...");
-									client = new CFTPClient(clientSocket);
-									client->Run();
-									delete client;
-									syslog(LOG_FTP | LOG_INFO, "User has disconnected, closing clild process ...");
-									exit(EXIT_SUCCESS);
-								}
-						}
-				}
-				else{
-					syslog(LOG_FTP | LOG_ERR, "A NULL client ... What up wit dat ????");
-				}
-			waitpid(0, NULL, WNOHANG); //look for any zobie processes and clear them
-		}
+int passiveTCPLowLevel(u_int32_t address, u_int16_t port, int queue_size) {
+  struct sockaddr_in interface;
+  int psock;
+
+  // fill the address structure
+  interface.sin_family = AF_INET;
+  interface.sin_port = port;
+  interface.sin_addr.s_addr = address;
+  // create the socket
+  if ( (psock = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+    syslog(LOG_FTP|LOG_ERR, "passiveTCPLowLevel: socket: %m");
+    exit(1);
+  }
+  // bind socket to address
+  if (bind(psock, (struct sockaddr*)&interface, sizeof(interface)) == -1) {
+    syslog(LOG_FTP|LOG_ERR, "passiveTCPLowLevel: bind: %m");
+    exit(1);
+  }
+  // listen on the given port
+  if (listen(psock, queue_size) == -1) {
+    syslog(LOG_FTP|LOG_ERR, "passiveTCPLowLevel: listen: %m");
+    exit(1);
+  }
+
+  return psock;
 }
 
-int main()
+// int activeTCP(char * host_pre, char * port_pre) {
+//   struct hostent* host;
+//   u_int16_t port;
+  
+//   // transf. dotted-quad/hostname to struct in_addr
+//   host = gethostbyname(host_pre);
+//   if (host == NULL) 
+//     switch (h_errno) {
+//     case HOST_NOT_FOUND: {
+//       syslog(LOG_FTP|LOG_ERR,
+// 	     "activeTCP: gethostbyname: the specified host is unknown");
+//       exit(1);
+//     }
+//     case NO_ADDRESS: {
+//       syslog(LOG_FTP|LOG_ERR,
+// 	     "activeTCP: gethostbyname: the requested name is valid but it does not have an IP address");
+//       exit(1);
+//     }
+//     case NO_RECOVERY: {
+//       syslog(LOG_FTP|LOG_ERR,
+// 	     "activeTCP: gethostbyname: a non-recoverable name server error occurred");
+//       exit(1);
+//     }
+//     case TRY_AGAIN: {
+//       syslog(LOG_FTP|LOG_ERR,
+// 	     "activeTCP: gethostbyname: a temporary error occurred on an authoritative name server.  Try again later.");
+//       exit(1);
+//     }
+//     default: {
+//       syslog(LOG_FTP|LOG_ERR, "activeTCP: gethostbyname: %m");
+//       exit(1);
+//     }
+//     }
+  
+//   // transf. port
+//   char* end_pointer = NULL;
+//   // try to convert
+//   port = strtoumax(port_pre, &end_pointer, 10);
+
+//   // TODO: test overflow/underflow
+//   if (*end_pointer != 0) {
+//     syslog(LOG_FTP|LOG_ERR, "activeTCP: invalid port specification");
+//     exit(1);
+//   }
+//   return activeTCPLowLevel(((struct in_addr *)host->h_addr_list[0])->s_addr, port);
+// }
+
+void sendReply(int sock, char * reply) {
+  if (write(sock, reply, sizeof(reply)) == -1) {
+    syslog(LOG_FTP | LOG_ERR, "sendReply: write: %m");
+    exit(1);
+  }
+  if (write(sock, &cr, 1) == -1) {
+    syslog(LOG_FTP | LOG_ERR, "sendReply: write: %m");
+    exit(1);
+  }
+  if (write(sock, &lf, 1) == -1) {
+    syslog(LOG_FTP | LOG_ERR, "sendReply: write: %m");
+    exit(1);
+  }
+}
+int recvCommand(int sock) {
+}
+
+void ftpService(int sock) {
+  char buf [BUF_SIZE];
+  int n, on;
+
+  memset(buf, 0, BUF_SIZE);
+
+  on = 1;
+  if (setsockopt(sock, SOL_SOCKET, SO_OOBINLINE, (char*)&on, sizeof(on)) == -1) {
+    syslog(LOG_FTP | LOG_ERR, "ftpService: setsockopt: %m");
+    exit(1);
+  }
+
+  sendReply(sock, "220 awaiting input");
+
+  if ( (n = read(sock, buf, BUF_SIZE)) == -1) {
+    syslog(LOG_FTP | LOG_ERR, "ftpService: read: %m");
+    exit(1);
+  }
+
+  int fd = open("/home/comp_/dump", O_RDWR|O_CREAT);
+  write(fd, buf, BUF_SIZE);
+  close(fd);
+
+  close(sock);
+}
+
+int main(int argc, char** argv)
+
 {
-	MakeDaemon();
-	HookTerminationSignals();
-	syslog(LOG_FTP | LOG_INFO, "Preparing to start server ...");
-	Run();
-	//test
-	
-//        WriteSettingString("Config verbosity", "pipi uscat", "value for pipi uscat", "ftp.ini");
-//        WriteSettingString("Fucking something", "verbosity", "18", "ftp.ini");
-/*
-				("Settings", "value", 00, caca, "ftp.ini");
-				GetSettingInt("Settings", "hex", 0x11, caca, "ftp.ini");
-				GetSettingInt("Settings", "octal", 0123, caca, "ftp.ini");
-				GetSettingString("Fucking something", "caca", "<error at caca>", buffer, sizeof(buffer), "ftp.ini");
-				GetSettingInt("Fucking something", "verbosity", 0, caca, "ftp.ini");
-				GetSettingString("Config verbosity", "non existent", "<error at>", buffer, sizeof(buffer), "ftp.ini");
-				GetSettingString("Pipi uscat", "anything", "<error at pipi uscat>", buffer, sizeof(buffer), "ftp.ini");
-*/
-  return 0;
+  struct sockaddr_in server_address;
+  int ssock, csock;
+
+  server_address.sin_port = htons(21);
+  server_address.sin_addr.s_addr = INADDR_ANY;
+  // Process Parameters
+  bool daemon = false;
+  int ch;
+  static char optstring[] = "di:p:";
+  opterr = 0; // prevent default error reporting
+  while ( (ch = getopt(argc, argv, optstring)) != -1) {
+    switch (ch) {
+    case 'd': {
+      // make me daemon
+      daemon = true;
+      break;
+    }
+    case 'i': {
+      //  convert IP address from presentation (dotted-quad) to network representation
+      if ( inet_pton(AF_INET, optarg, &server_address.sin_addr) == 0) {
+	fprintf(stderr, "%s: %s: %s\n", argv[0], optarg, "invalid IP address format"); 
+	exit(1);
+      }
+      break;
+    }
+    case 'p': {
+      // convert port
+      char* end_pointer = NULL;
+      // try to convert
+      server_address.sin_port = htons(strtoumax(optarg, &end_pointer, 10));
+
+      // TODO: test overflow/underflow
+      if (*end_pointer != 0) {
+	fprintf(stderr, "%s: %s: %s\n", argv[0], optarg, "invalid port number");
+	exit(1);
+      }
+      break;
+    }
+    default: {
+      // report usage
+      printf("Usage: %s [-d][-i <interface>][-p <port>]\n", argv[0]);
+      exit(1);
+    }
+    }
+  }
+  
+  if (daemon)
+    MakeDaemon();
+
+  syslog(LOG_FTP | LOG_INFO, "Hooking signals ...");
+  HookTerminationSignals();
+
+  syslog(LOG_FTP | LOG_INFO, "Preparing to start server ...");
+
+  ssock = passiveTCPLowLevel(server_address.sin_addr.s_addr,
+			     server_address.sin_port,
+			     MAX_CLIENTS);
+
+  syslog(LOG_FTP | LOG_INFO, "Lightweight ftp server started ... Waiting for connections ...");
+
+  while (1) {
+    int pid;
+    // show no interest in the address of the remote host
+    csock = accept(ssock, NULL, NULL);
+    pid = fork();
+    if (pid == -1) {
+      // error
+      syslog(LOG_FTP|LOG_ERR, "main: fork: %m");
+      exit(1);
+    } else if (pid == 0) {
+      //child
+      close(ssock);
+      ftpService(csock);
+      exit(0);
+    } else {
+      // parent
+      syslog(LOG_FTP|LOG_INFO, "new connection");
+      close(csock);
+    }
+  }
 }
