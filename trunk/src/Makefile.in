@@ -54,7 +54,8 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_ftp_server_OBJECTS = ftp_server.$(OBJEXT) utils.$(OBJEXT) \
 	client.$(OBJEXT) configUtils.$(OBJEXT) logClient.$(OBJEXT) \
-	csocket.$(OBJEXT) messages.$(OBJEXT) callback.$(OBJEXT)
+	csocket.$(OBJEXT) messages.$(OBJEXT) callback.$(OBJEXT) \
+	ftp_handlers.$(OBJEXT) ftp.$(OBJEXT)
 ftp_server_OBJECTS = $(am_ftp_server_OBJECTS)
 ftp_server_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
@@ -62,6 +63,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/callback.Po ./$(DEPDIR)/client.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/configUtils.Po ./$(DEPDIR)/csocket.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ftp.Po ./$(DEPDIR)/ftp_handlers.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ftp_server.Po ./$(DEPDIR)/logClient.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/messages.Po ./$(DEPDIR)/utils.Po
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -180,7 +182,7 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 ftp_server_SOURCES = ftp_server.cpp utils.cpp client.cpp configUtils.cpp \
-			logClient.cpp csocket.cpp messages.cpp callback.cpp
+			logClient.cpp csocket.cpp messages.cpp callback.cpp ftp_handlers.cpp ftp.cpp
 
 
 # set the include path found by configure
@@ -267,6 +269,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/configUtils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/csocket.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ftp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ftp_handlers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ftp_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logClient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/messages.Po@am__quote@

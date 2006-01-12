@@ -34,6 +34,7 @@
 #include "configUtils.h"
 #include "client.h"
 #include "ftp.h"
+#include "ftp_handlers.h"
 //#include "logClient.h"
 #include <inttypes.h>
 #include <netdb.h>
@@ -230,23 +231,11 @@ void sendReply(int sock, char * reply) {
   }
 }
 
-void handleCommand(const char* cmd, const char* arg, char* reply, size_t reply_size, bool* terminate) {
-  int i;
-  for (i = 0; i < _FTPCMDS_END; i++)
-    if (strcasecmp(cmd, ftpcmds[i]) == 0) {
-      snprintf(reply, reply_size, FTP_R200, cmd, i);
-      if (i == FTP_CQUIT)
-	*terminate = true;
-      return;
-    }
-  snprintf(reply, reply_size, FTP_R500, cmd, i);
-}
-
 void ftpService(int sock) {
   char buf [BUF_SIZE];
   char reply [BUF_SIZE];
   bool terminate = false;
-  int n, on;
+  int n, on, i;
   char *delimiters = " \n\r";
   char *temp, *cmd, *arg;
 
@@ -271,20 +260,33 @@ void ftpService(int sock) {
     }
     // TODO: check if command too large for buffer = not ending in CRLF
 
-    // parse cmd and argumets
+    // parse cmd and arguments
     temp = strdupa(buf);
     cmd = strtok(temp, delimiters);
     arg = strtok(NULL, delimiters);
-    // handle the cmd and fill in the reply
-    handleCommand(cmd, arg, reply, BUF_SIZE, &terminate);
-    // send back reply
-    sendReply(sock, reply);
+    // should ignore blank commands or send a reply?
+    if (cmd != NULL) {
+      // look for handler
+      for (i = 0; i < _FTPCMDS_END; i++)
+	if (strcasecmp(cmd, ftpcmds[i]) == 0) {
+	  ftphandlers[i](cmd, arg, (char*)&reply, BUF_SIZE, &terminate);
+// 	  // say good bye and terminate
+// 	  if (i == FTP_CQUIT) {
+// 	    terminate = true;
+// 	    snprintf(reply, BUF_SIZE, FTP_R221);
+// 	  }
+// 	  else
+// 	    // handle command
+// 	    snprintf(reply, BUF_SIZE, FTP_R200, cmd);
+	  break;
+	}
+      // unknown command
+      if (i == _FTPCMDS_END)
+	snprintf(reply, BUF_SIZE, FTP_R500, cmd);
+      // send back reply
+      sendReply(sock, reply);
+    }
   }
-
-  // purpose - debug
-//   int fd = open("/home/comp_/dump", O_RDWR|O_CREAT);
-//   write(fd, buf, BUF_SIZE);
-//   close(fd);
 
   close(sock);
 }

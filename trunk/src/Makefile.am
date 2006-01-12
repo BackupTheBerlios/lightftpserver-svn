@@ -1,6 +1,6 @@
 bin_PROGRAMS = ftp_server
 ftp_server_SOURCES = ftp_server.cpp utils.cpp client.cpp configUtils.cpp \
-			logClient.cpp csocket.cpp messages.cpp callback.cpp
+			logClient.cpp csocket.cpp messages.cpp callback.cpp ftp_handlers.cpp ftp.cpp
 
 # set the include path found by configure
 INCLUDES = -I$(top_srcdir)/src -I$(top_srcdir)/src/logServer $(all_includes)
