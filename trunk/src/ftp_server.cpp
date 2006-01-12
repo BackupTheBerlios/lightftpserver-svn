@@ -230,7 +230,16 @@ void sendReply(int sock, char * reply) {
   }
 }
 
-int recvCommand(int sock) {
+void handleCommand(const char* cmd, const char* arg, char* reply, size_t reply_size, bool* terminate) {
+  int i;
+  for (i = 0; i < _FTPCMDS_END; i++)
+    if (strcasecmp(cmd, ftpcmds[i]) == 0) {
+      snprintf(reply, reply_size, FTP_R200, cmd, i);
+      if (i == FTP_CQUIT)
+	*terminate = true;
+      return;
+    }
+  snprintf(reply, reply_size, FTP_R500, cmd, i);
 }
 
 void ftpService(int sock) {
@@ -238,6 +247,8 @@ void ftpService(int sock) {
   char reply [BUF_SIZE];
   bool terminate = false;
   int n, on;
+  char *delimiters = " \n\r";
+  char *temp, *cmd, *arg;
 
   // don't wait for system buffer to be full
   on = 1;
@@ -252,15 +263,20 @@ void ftpService(int sock) {
 
   while (!terminate) {
     // read command
+    memset(buf, 0, BUF_SIZE);
     // TODO: loop to read all data
     if ( (n = read(sock, buf, BUF_SIZE)) == -1) {
       syslog(LOG_FTP | LOG_ERR, "ftpService: read: %m");
       exit(1);
     }
-    // TODO: check if command too large for buffer
+    // TODO: check if command too large for buffer = not ending in CRLF
 
-    // handle it
-    snprintf(reply, BUF_SIZE, FTP_R220, "LightFTPServer v0.1");
+    // parse cmd and argumets
+    temp = strdupa(buf);
+    cmd = strtok(temp, delimiters);
+    arg = strtok(NULL, delimiters);
+    // handle the cmd and fill in the reply
+    handleCommand(cmd, arg, reply, BUF_SIZE, &terminate);
     // send back reply
     sendReply(sock, reply);
   }
