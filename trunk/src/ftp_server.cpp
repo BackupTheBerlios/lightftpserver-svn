@@ -33,6 +33,7 @@
 
 #include "configUtils.h"
 #include "client.h"
+#include "ftp.h"
 //#include "logClient.h"
 #include <inttypes.h>
 #include <netdb.h>
@@ -215,7 +216,7 @@ int passiveTCPLowLevel(u_int32_t address, u_int16_t port, int queue_size) {
 // }
 
 void sendReply(int sock, char * reply) {
-  if (write(sock, reply, sizeof(reply)) == -1) {
+  if (write(sock, reply, strlen(reply)) == -1) {
     syslog(LOG_FTP | LOG_ERR, "sendReply: write: %m");
     exit(1);
   }
@@ -228,31 +229,46 @@ void sendReply(int sock, char * reply) {
     exit(1);
   }
 }
+
 int recvCommand(int sock) {
 }
 
 void ftpService(int sock) {
   char buf [BUF_SIZE];
+  char reply [BUF_SIZE];
+  bool terminate = false;
   int n, on;
 
-  memset(buf, 0, BUF_SIZE);
-
+  // don't wait for system buffer to be full
   on = 1;
   if (setsockopt(sock, SOL_SOCKET, SO_OOBINLINE, (char*)&on, sizeof(on)) == -1) {
     syslog(LOG_FTP | LOG_ERR, "ftpService: setsockopt: %m");
     exit(1);
   }
 
-  sendReply(sock, "220 awaiting input");
+  // let the peer know that you are ready
+  snprintf(reply, BUF_SIZE, FTP_R220, "LightFTPServer v0.1");
+  sendReply(sock, reply);
 
-  if ( (n = read(sock, buf, BUF_SIZE)) == -1) {
-    syslog(LOG_FTP | LOG_ERR, "ftpService: read: %m");
-    exit(1);
+  while (!terminate) {
+    // read command
+    // TODO: loop to read all data
+    if ( (n = read(sock, buf, BUF_SIZE)) == -1) {
+      syslog(LOG_FTP | LOG_ERR, "ftpService: read: %m");
+      exit(1);
+    }
+    // TODO: check if command too large for buffer
+
+    // handle it
+    snprintf(reply, BUF_SIZE, FTP_R220, "LightFTPServer v0.1");
+    // send back reply
+    sendReply(sock, reply);
   }
 
-  int fd = open("/home/comp_/dump", O_RDWR|O_CREAT);
-  write(fd, buf, BUF_SIZE);
-  close(fd);
+  // purpose - debug
+//   int fd = open("/home/comp_/dump", O_RDWR|O_CREAT);
+//   write(fd, buf, BUF_SIZE);
+//   close(fd);
 
   close(sock);
 }
