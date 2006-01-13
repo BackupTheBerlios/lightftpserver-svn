@@ -29,6 +29,23 @@
 #define DISCONNECT_COMMAND       2
 #define DISCONNECT_DATA_COMMAND  DISCONNECT_DATA | DISCONNECT_COMMAND
 
+#define TYPE_ASCII			1
+#define TYPE_EBCDIC			2
+#define TYPE_IMAGE			3
+#define TYPE_LOCAL			4
+
+#define TYPEF_NONPRINT	0x00100
+#define TYPEF_TELNET		0x00200
+#define TYPEF_ASA				0x00400
+
+#define STRUCT_FILE			1
+#define STRUCT_RECORD		2
+#define STRUCT_PAGE			3
+
+#define MODE_STREAM			1
+#define MODE_BLOCK			2
+#define MODE_COMPRESSED	3
+
 typedef long long TParam1;
 typedef char * TParam2; //the raw sent message
 

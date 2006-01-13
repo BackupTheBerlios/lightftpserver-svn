@@ -35,6 +35,9 @@ CFTPClient::CFTPClient(CSocket *commandSocket)
 	loggedIn = 0;
 	userEntered = 0;
 	userName = NULL;
+	nType = TYPE_ASCII;
+	nStructure = STRUCT_FILE;
+	nMode = MODE_STREAM;
 	szCurrentPath = NULL;
 	this->commandSocket = commandSocket;
 	dataSocket = NULL;
@@ -246,7 +249,7 @@ int CFTPClient::HandleSmntCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleQuitCommand(TParam1 param1, TParam2 param2)
 {
-	SendReply("Leaving so soon ?");
+	SendReply(FTP_R221);
 	Disconnect();
 }
 
