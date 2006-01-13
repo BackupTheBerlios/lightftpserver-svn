@@ -28,7 +28,7 @@ int TMethodCallback::operator()(TParam1 param1, TParam2 param2)
 		}
 }
 
-TMethodCallback Binder(MessageCallback callback, CFTPClient *instance)
+TMethodCallback Binder(ClassCallback callback, CFTPClient *instance)
 {
 	TMethodCallback tmp;
 	tmp.instance = instance;

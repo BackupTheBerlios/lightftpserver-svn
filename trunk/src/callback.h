@@ -23,18 +23,17 @@
 #include "commonheaders.h"
 #include "client.h"
 
-typedef int (CFTPClient::*MessageCallback)(TParam1, TParam2);
+typedef int (CFTPClient::*ClassCallback)(TParam1, TParam2);
 
 struct TMethodCallback{
 	CFTPClient *instance;
-	MessageCallback callback;
+	ClassCallback callback;
 	
 	int operator()(TParam1 param1, TParam2 param2);
 };
 
 //binds a class method an in instance of that class
-TMethodCallback Binder(MessageCallback callback, CFTPClient *instance);
-
+TMethodCallback Binder(ClassCallback callback, CFTPClient *instance);
 
 #endif
 

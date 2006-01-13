@@ -22,6 +22,8 @@
 #define CHAT_CLIENT_H
 
 #include "commonheaders.h"
+#include <syslog.h>
+
 
 #define DISCONNECT_DATA          1
 #define DISCONNECT_COMMAND       2
@@ -42,8 +44,10 @@ class CFTPClient{
 		CSocket *commandSocket;
 		CSocket *dataSocket;
 		
-		int WaitForMessage(char *buffer, int &size);
+		int WaitForMessage(char *buffer, int size);
 		int TranslateMessage(char *buffer);
+		
+		int Handle(int index, TParam1 param1, TParam2 param2);
 		
 	public:
 		CFTPClient(CSocket *commandSocket);
@@ -56,11 +60,42 @@ class CFTPClient{
 		char *GetCurrentPath();
 		void SetCurrentPath(char *newPath);
 		
+		void SendReply(char *message);
 		
 //	private:
-		int HandleHelpCommand(TParam1 param1, TParam2 param2);
+		int HandleUserCommand(TParam1 param1, TParam2 param2);
+		int HandlePassCommand(TParam1 param1, TParam2 param2);
+		int HandleAcctCommand(TParam1 param1, TParam2 param2);
+		int HandleCwdCommand(TParam1 param1, TParam2 param2);
+		int HandleCdupCommand(TParam1 param1, TParam2 param2);
+		int HandleSmntCommand(TParam1 param1, TParam2 param2);
+		int HandleQuitCommand(TParam1 param1, TParam2 param2);
+		int HandleReinCommand(TParam1 param1, TParam2 param2);
+		int HandlePortCommand(TParam1 param1, TParam2 param2);
+		int HandlePasvCommand(TParam1 param1, TParam2 param2);
+		int HandleTypeCommand(TParam1 param1, TParam2 param2);
+		int HandleStruCommand(TParam1 param1, TParam2 param2);
+		int HandleModeCommand(TParam1 param1, TParam2 param2);
+		int HandleRetrCommand(TParam1 param1, TParam2 param2);
+		int HandleStorCommand(TParam1 param1, TParam2 param2);
+		int HandleStouCommand(TParam1 param1, TParam2 param2);
+		int HandleAppeCommand(TParam1 param1, TParam2 param2);
+		int HandleAlloCommand(TParam1 param1, TParam2 param2);
+		int HandleRestCommand(TParam1 param1, TParam2 param2);
+		int HandleRnfrCommand(TParam1 param1, TParam2 param2);
+		int HandleRntoCommand(TParam1 param1, TParam2 param2);
+		int HandleAborCommand(TParam1 param1, TParam2 param2);
+		int HandleDeleCommand(TParam1 param1, TParam2 param2);
+		int HandleRmdCommand(TParam1 param1, TParam2 param2);
+		int HandleMkdCommand(TParam1 param1, TParam2 param2);
+		int HandlePwdCommand(TParam1 param1, TParam2 param2);
 		int HandleListCommand(TParam1 param1, TParam2 param2);
+		int HandleNlstCommand(TParam1 param1, TParam2 param2);
+		int HandleSiteCommand(TParam1 param1, TParam2 param2);
+		int HandleSystCommand(TParam1 param1, TParam2 param2);
 		int HandleStatCommand(TParam1 param1, TParam2 param2);
+		int HandleHelpCommand(TParam1 param1, TParam2 param2);
+		int HandleNoopCommand(TParam1 param1, TParam2 param2);
 };
 
 

@@ -90,7 +90,13 @@ sockaddr_in CreateSocketAddress(sa_family_t family, int port, char *host)
 	sockaddr_in tmp = {0};
 	tmp.sin_family = family;
 	tmp.sin_port = htons(port);
-	tmp.sin_addr.s_addr = inet_addr(host);
+	if ((in_addr_t) host != INADDR_ANY)
+		{
+			tmp.sin_addr.s_addr = inet_addr(host);
+		}
+		else{
+			tmp.sin_addr.s_addr = INADDR_ANY;
+		}
 	return tmp;
 }
 

@@ -38,10 +38,13 @@ enum FTP_CMDS {
   _FTPCMDS_END
 };
 
-extern char* ftpcmds[];
+//extern char* ftpcmds[];
 
 // Used as format strings
 // TODO: fill formatting information
+//TODO: cum is acuma definite trebuie sa stiu codul erorii ca sa folosesc define-ul
+//nu ar fi mai bine daca ar fi numele comenzii ? macar la alea care se poate
+//sa fie de ex define-uri duble, unu cu codul (cum ii acuma) si unul cu comanda - la care se poate bineinteles (care au numai un cod de eroare)
 #define FTP_R110 "110 Restart marker reply."
 #define FTP_R120 "120 Service ready in nnn minutes."
 #define FTP_R125 "125 Data connection already open; transfer starting."
@@ -51,13 +54,8 @@ extern char* ftpcmds[];
 #define FTP_R211 "211 System status, or system help reply."
 #define FTP_R212 "212 Directory status." 
 #define FTP_R213 "213 File status."
-#define FTP_R214 "214-Help (* - unimplemented)\r\n\
-USER* PASS* ACCT* CWD*  CDUP* SMNT* QUIT  REIN*\n\r\
-PORT* PASV* TYPE* STRU* MODE* RETR* STOR* STOU*\n\r\
-APPE* ALLO* REST* RNFR* RNTO* ABOR* DELE* RMD*\n\r\
-MKD*  PWD*  LIST* NLST* SITE* SYST* STAT* HELP\n\r\
-NOOP*\n\r\
-214 more implemented soon"
+#define FTP_R214 "214 Help"
+
 #define FTP_R215 "215 NAME system type."
 #define FTP_R220 "220 %s Service ready for new user."
 #define FTP_R221 "221 Service closing control connection. Good bye!"

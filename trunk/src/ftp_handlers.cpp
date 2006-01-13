@@ -1,5 +1,25 @@
 #include "ftp_handlers.h"
 
+int CommandHandler::Handle(CFTPClient *instance, TParam1 param1, TParam2 param2)
+{
+	TMethodCallback methodCallback = Binder(callback, instance);
+	return methodCallback(param1, param2);
+}
+
+#include "client.h"
+CommandHandler handlers[] = {{FTP_CUSER, "user", &CFTPClient::HandleUserCommand},
+														 {FTP_CPASS, "pass", &CFTPClient::HandlePassCommand},
+														 {FTP_CLIST, "list", &CFTPClient::HandleListCommand},
+														 {FTP_CNOOP, "noop", &CFTPClient::HandleNoopCommand},
+														 {FTP_CCWD, "cwd",   &CFTPClient::HandleCwdCommand},
+														 {FTP_CSTOR, "stor", &CFTPClient::HandleStorCommand},
+														 {FTP_CQUIT, "quit", &CFTPClient::HandleQuitCommand},
+														 {FTP_CHELP, "help", &CFTPClient::HandleHelpCommand}
+														 };
+
+int cHandlers = (sizeof(handlers) / sizeof(handlers[0]));
+
+/*
 void handleUSER(const char* cmd, const char* arg, char* reply, unsigned int reply_size, bool* terminate)
 {snprintf(reply, reply_size, FTP_R202, cmd);}
 void handlePASS(const char* cmd, const char* arg, char* reply, unsigned int reply_size, bool* terminate)
@@ -105,3 +125,4 @@ ftphandler_t ftphandlers[_FTPCMDS_END] = {
   &handleHELP,
   &handleNOOP,
 };
+*/

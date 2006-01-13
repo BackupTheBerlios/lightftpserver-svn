@@ -1,3 +1,4 @@
+/*
 char* ftpcmds[] = {
   "USER",
   "PASS",
@@ -33,3 +34,5 @@ char* ftpcmds[] = {
   "HELP",
   "NOOP"
 };
+*/
+

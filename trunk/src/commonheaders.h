@@ -34,6 +34,8 @@ Commonheaders.h long description.
 #include <errno.h>
 #include <unistd.h>
 
+#include <syslog.h>
+
 //socket stuff
 #include <sys/types.h>
 #include <sys/socket.h>
