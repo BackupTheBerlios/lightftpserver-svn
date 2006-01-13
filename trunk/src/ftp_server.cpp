@@ -73,12 +73,13 @@ void HandleChildTermination(int nSignal)
   wait(&stat);
   syslog(LOG_FTP | LOG_INFO, "slave exited with status: %d", stat);
 }
+
 int HookTerminationSignals()
 {
   signal(SIGQUIT, HandleTerminationSignals);
   signal(SIGTERM, HandleTerminationSignals);
   signal(SIGINT, HandleTerminationSignals);
-  signal(SIGCHLD, HandleChildTermination);
+//  signal(SIGCHLD, HandleChildTermination); - popen nu mai functioneaza
 }
 
 void MakeDaemon()

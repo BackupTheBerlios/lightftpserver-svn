@@ -30,17 +30,20 @@
 #define DISCONNECT_DATA_COMMAND  DISCONNECT_DATA | DISCONNECT_COMMAND
 
 typedef long long TParam1;
-typedef long TParam2;
+typedef char * TParam2; //the raw sent message
 
 //needs work
 class CFTPClient{
 	protected:
 		char *szCurrentPath;
+		char *userName;
 		int nMode;
 		int nType;
 		int nStructure;
 		int nPathSize;
 		int connected;
+		int userEntered;
+		int loggedIn;
 		CSocket *commandSocket;
 		CSocket *dataSocket;
 		

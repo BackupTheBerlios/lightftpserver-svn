@@ -32,6 +32,9 @@ CFTPClient::CFTPClient(CSocket *commandSocket)
 	///\todo do constructor
 	connected = 0;
 	nPathSize = 0;
+	loggedIn = 0;
+	userEntered = 0;
+	userName = NULL;
 	szCurrentPath = NULL;
 	this->commandSocket = commandSocket;
 	dataSocket = NULL;
@@ -76,6 +79,11 @@ int CFTPClient::Run()
 		{
 			syslog(LOG_FTP | LOG_INFO, "Waiting for message");
 			size = WaitForMessage(buffer, BUF_SIZE);
+			while ((buffer[size - 1] == '\n') || (buffer[size - 1] == '\r'))
+				{
+					buffer[size - 1 ] = '\0';
+					size--;
+				}
 			sprintf(caca, "size = %d, buffer = %s", size, buffer);
 			syslog(LOG_FTP | LOG_INFO, caca);
 			if (size <= 0)
@@ -93,7 +101,7 @@ int CFTPClient::Run()
 							sprintf(caca, "Unknown command %s", buffer);
 						}
 					syslog(LOG_FTP | LOG_INFO, caca);
-					Handle(index, 0, 0);
+					Handle(index, 0, buffer);
 				}
 		}
 	commandSocket->Send("Thanks for using Light ftp server ...\n");
@@ -170,9 +178,6 @@ void CFTPClient::SendReply(char *message)
 	const int len = strlen(message);
 	char x = message[len - 1];
 	char y = message[len - 2];
-	char caca[BUF_SIZE];
-	sprintf(caca, "x = %c, y = %c", x, y);
-	syslog(LOG_FTP | LOG_INFO, caca);
 	if ((x != '\n') || ((x != '\r')) && (y != '\n'))
 		{
 			char buffer[len + 2];
@@ -190,12 +195,24 @@ void CFTPClient::SendReply(char *message)
 
 int CFTPClient::HandleUserCommand(TParam1 param1, TParam2 param2)
 {
+	//TODO mai trebuie verificat aici
 	SendReply("you just used the USER command");
+	userEntered = 1;
 }
 
 int CFTPClient::HandlePassCommand(TParam1 param1, TParam2 param2)
 {
+	//TODO trebuie facuta loginarea calumea
 	SendReply("What ? you want a password too ?");
+	if (userEntered)
+		{
+			SendReply("Congratulations, you're now logged in");
+			loggedIn = 1;
+			SetCurrentPath("~");
+		}
+		else{
+			SendReply("You need to use USER first");
+		}
 }
 
 int CFTPClient::HandleAcctCommand(TParam1 param1, TParam2 param2)
@@ -204,6 +221,19 @@ int CFTPClient::HandleAcctCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleCwdCommand(TParam1 param1, TParam2 param2)
 {
+	if (!loggedIn)
+		{
+			SendReply("You need to be logged in first");
+		}
+		else{
+			if (strlen(param2) > 4)
+				{
+					char *pos = param2 + 4;
+					//TODO trim pos of spaces and newline
+					SetCurrentPath(pos);
+				}
+			SendReply("path changed ok");
+		}
 }
 
 int CFTPClient::HandleCdupCommand(TParam1 param1, TParam2 param2)
@@ -294,10 +324,34 @@ int CFTPClient::HandleMkdCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandlePwdCommand(TParam1 param1, TParam2 param2)
 {
+	char buffer[BUF_SIZE];
+	sprintf(buffer, "Current working directory = %s", szCurrentPath);
+	SendReply(buffer);
 }
 
 int CFTPClient::HandleListCommand(TParam1 param1, TParam2 param2)
 {
+	//TODO: use the data connection
+	if (!loggedIn)
+		{
+			SendReply("You need to be logged in first");
+		}
+		else{
+			char *buffer = (char *) malloc(1024 * 1024); //memory problems
+			char tmp[BUF_SIZE];
+			sprintf(buffer, "ls -al %s", szCurrentPath);
+			FILE *fin = popen(buffer, "r");
+			buffer[0] = '\0';
+			fgets(tmp, sizeof(tmp), fin); //skip the total = ... line
+			while (!feof(fin))
+				{
+					fgets(tmp, sizeof(tmp), fin);
+					strcat(buffer, tmp);
+				}
+			SendReply(buffer);
+			pclose(fin);
+			free(buffer);
+		}
 }
 
 int CFTPClient::HandleNlstCommand(TParam1 param1, TParam2 param2)
@@ -343,4 +397,7 @@ int CFTPClient::HandleHelpCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleNoopCommand(TParam1 param1, TParam2 param2)
 {
+	char buffer[BUF_SIZE];
+	sprintf(buffer, FTP_R200, "NOOP");
+	SendReply(buffer);
 }
