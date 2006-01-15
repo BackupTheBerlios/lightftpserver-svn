@@ -32,6 +32,50 @@ void Log(char *message)
 	syslog(LOG_FTP | LOG_INFO, message);
 }
 
+void LogSpecialChars(char *message)
+{
+	const int len = strlen(message);
+	char buffer[(2 * (len + 1))];
+	buffer[0] = '\0';
+	int i, j = 0;
+	for (i = 0; i < len; i++)
+		{
+			switch (message[i])
+				{
+					case '\\':
+						{
+							strcat(buffer, "\\\\");
+							j += 2;
+							break;
+						}
+					case '\n':
+						{
+							strcat(buffer, "\\n");
+							j += 2;
+							break;
+						}
+					case '\r':
+						{
+							strcat(buffer, "\\r");
+							j += 2;
+							break;
+						}
+					case '\t':
+						{
+							strcat(buffer, "\\t");
+							j += 2;
+							break;
+						}
+					default:
+						{
+							buffer[j++] = message[i];
+						}
+				}
+		}
+	buffer[j++] = '\0';
+	Log(buffer);
+}
+
 struct tm *GetCurrentLocalTime()
 {
 	time_t timp;

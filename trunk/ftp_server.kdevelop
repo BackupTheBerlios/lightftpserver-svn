@@ -48,7 +48,7 @@
         <envvars/>
         <topsourcedir></topsourcedir>
         <cppflags></cppflags>
-        <ldflags>-lpthread</ldflags>
+        <ldflags>-lcrypt -lpthread</ldflags>
         <ccompilerbinary></ccompilerbinary>
         <cxxcompilerbinary></cxxcompilerbinary>
         <f77compilerbinary></f77compilerbinary>
@@ -64,7 +64,7 @@
       <abortonerror>true</abortonerror>
       <numberofjobs>1</numberofjobs>
       <dontact>false</dontact>
-      <makebin></makebin>
+      <makebin/>
       <prio>0</prio>
     </make>
   </kdevautoproject>
@@ -129,7 +129,7 @@
       <hidenonlocation>false</hidenonlocation>
     </groups>
     <tree>
-      <hidepatterns></hidepatterns>
+      <hidepatterns/>
       <hidenonprojectfiles>true</hidenonprojectfiles>
       <showvcsfields>true</showvcsfields>
     </tree>

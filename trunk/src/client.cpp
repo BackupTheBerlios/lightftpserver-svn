@@ -73,10 +73,7 @@ void CFTPClient::Clear()
 		{
 			delete pasvDataSocket;
 		}
-	if (dataFile)
-		{
-			fclose(dataFile); //what if it's a popen FD ?
-		}
+	CloseDTPFileDescriptor();
 	if (userName)
 		{
 			free(userName);
@@ -110,9 +107,11 @@ This is the main ftp client function. Here we receive all the commands, send the
 */
 int CFTPClient::Run()
 {
-	commandSocket->Send("Welcome to Light ftp server ...\n");
+	//commandSocket->Send("Welcome to Light ftp server ...\n");
 	int done = 0;
 	char buffer[BUF_SIZE];
+	sprintf(buffer, FTP_R220, "LightFTP server");
+	SendReply(buffer);
 	char caca[BUF_SIZE];
 	int size;
 	int index;
@@ -194,7 +193,7 @@ int CFTPClient::Run()
 			if ((fdsDataConn) && (dataConnActive))
 				{
 					Log("Checking to see if the fd set for DTP contains any data");
-					sprintf(caca, "pasvDataSocket = %p, dataSocket = %p, FD_ISSET(dataSocket) = %d, FD_ISSET(pasvDataSocket)", pasvDataSocket, dataSocket, FD_ISSET(dataSocket->Socket(), fdsDataConn), FD_ISSET(pasvDataSocket->Socket(), fdsDataConn));
+					sprintf(caca, "pasvDataSocket = %p, dataSocket = %p", pasvDataSocket, dataSocket);
 					Log(caca);
 					if ((FD_ISSET(dataSocket->Socket(), fdsDataConn)) || ((pasvDataSocket) && (FD_ISSET(pasvDataSocket->Socket(), fdsDataConn))))
 						{
@@ -230,6 +229,41 @@ int CFTPClient::TranslateMessage(char *buffer)
 				}
 		}
 	return TRANSLATE_UNKNOWN;
+}
+
+
+char *CFTPClient::CorrectRepresentation(char *message)
+{
+	int len = strlen(message);
+	char buffer[BUF_SIZE];
+	sprintf(buffer, "Correcting representation for : %s", message);
+	Log(buffer);
+	switch (nType)
+		{
+			case TYPE_ASCII:
+				{
+					strcpy(buffer, message);
+					Log("Correcting for TYPE = ASCII");
+					int i = len - 1;
+					while ((message[i] == '\n') || (message[i] == '\r'))
+						{
+							message[i--] = '\0';
+						}
+					strcat(message, "\r\n");
+					Log("Corrected message:");
+					LogSpecialChars(message);
+					return message;
+					break;
+				}
+			case TYPE_EBCDIC:
+			case TYPE_IMAGE:
+			default:
+				{
+					Log("Correcting for other TYPE ... (shouldn't happen)");
+					return message;
+					break;
+				}
+		}
 }
 
 int CFTPClient::Handle(int index, TParam1 buffer, TParam2 param2)
@@ -290,7 +324,7 @@ int CFTPClient::DoDTP()
 							char *res = fgets(buffer, sizeof(buffer), dataFile);
 							if (res)
 								{
-									sock->Send(buffer);
+									sock->Send(CorrectRepresentation(buffer));
 								}
 						}
 						else{
@@ -422,10 +456,11 @@ int CFTPClient::HandleUserCommand(TParam1 param1, TParam2 param2)
 int CFTPClient::HandlePassCommand(TParam1 param1, TParam2 param2)
 {
 	//TODO trebuie facuta loginarea calumea
-	SendReply("What ? you want a password too ?");
+	//SendReply("What ? you want a password too ?");
 	if (userEntered)
 		{
-			SendReply("Congratulations, you're now logged in");
+			SendReply(FTP_R230);
+			//SendReply("Congratulations, you're now logged in");
 			loggedIn = 1;
 			SetCurrentPath("~");
 		}
@@ -496,9 +531,11 @@ int CFTPClient::HandlePortCommand(TParam1 param1, TParam2 param2)
 	char host[20]; //should be enough
 	int p1, p2, port;
 	char buffer[BUF_SIZE];
+	sprintf(buffer, "Param2 = '%s'", param2);
+	Log(buffer);
 	if (param2)
 		{
-			sscanf(param2, "%[0-9],%[0-9],%[0-9],%[0-9],%d,%d", h1, h2, h3, h4, p1, p2);
+			sscanf(param2, "%[0-9],%[0-9],%[0-9],%[0-9],%d,%d", h1, h2, h3, h4, &p1, &p2);
 			port = (p1 << 8) + p2;
 			sprintf(host, "%s.%s.%s.%s", h1, h2, h3, h4);
 			sprintf(buffer, "Connecting to host = %s, port = %d (param = %s; %s,%s,%s,%s,%d,%d", host, port, param2, h1, h2, h3, h4, p1, p2);
@@ -513,6 +550,7 @@ int CFTPClient::HandlePortCommand(TParam1 param1, TParam2 param2)
 	dataConnType = DATA_CONN_FPORT;
 }
 
+/*
 void *PasvAcceptWorkerThread(void *param)
 {
 	syslog(LOG_FTP | LOG_INFO, "inside worker thread ...");
@@ -524,6 +562,7 @@ void *PasvAcceptWorkerThread(void *param)
 	syslog(LOG_FTP | LOG_INFO, "inside worker thread after set data socket...");
 	return data;
 }
+*/
 
 int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 {
@@ -533,7 +572,7 @@ int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 	dataSocket = new CSocket(); //WHY ??? WTF
 	int port; //dataSocket->Port();
 	int res = 1;
-	for (port = 12345; (res != 0); port++) //find an open port
+	for (port = 64000; (res != 0); port--) //find an open port
 		{
 			res = dataSocket->Bind(AF_INET, port, "127.0.0.1");
 			if (res != 0)
@@ -548,57 +587,88 @@ int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 		syslog(LOG_FTP | LOG_INFO, "Error at listen %m");
 	}
 	char buffer[BUF_SIZE];
-	/*sprintf(buffer, "port = %d, dataSocket = %p (%m)", port, dataSocket);
-	syslog(LOG_FTP | LOG_INFO, buffer);*/
-	sprintf(buffer, FTP_R227, "127.0.0.1", (port >> 8), (port & 0xFF));
+	sprintf(buffer, FTP_R227, "127,0,0,1", (port >> 8), (port & 0xFF));
 	SendReply(buffer);
-	//dataConnActive = DATA_CONN_ACTIVE;
 	dataConnType = DATA_CONN_FPASV;
 	Log("Accepting pasv connection (please connect before continuing)  '%m' ...");
 	while(!pasvDataSocket)
 		{
 			pasvDataSocket = dataSocket->Accept();
-			/*char caca[200];
-			sprintf(caca, "pasvDataSocket = %p, dataSocket = %p %s ('%m')", pasvDataSocket, dataSocket, strerror(dataSocket->GetLastError()));
-			Log(caca);*/
 		}
-	/*Log("before sleep(10) '%m'");
-	sleep(10);
-	Log("After Accept()");
-	SendReply("Sleepy time over");
-	syslog(LOG_FTP | LOG_INFO, buffer);*/
-	//PasvAcceptWorkerThread(this);
-/*	pthread_t thread;
-	res = pthread_create(&thread, NULL, PasvAcceptWorkerThread, (void *) this);
-	sprintf(buffer, "thread = %d", thread);
-	syslog(LOG_FTP | LOG_INFO, buffer);
-	if (res != 0)
-		{
-			syslog(LOG_FTP | LOG_INFO, "Error at  pthread_create %m");
-		}
-		else{
-			syslog(LOG_FTP | LOG_INFO, "Success:  pthread_create %m");
-		}*/
 }
 
 int CFTPClient::HandleTypeCommand(TParam1 param1, TParam2 param2)
 {
 	char buffer[BUF_SIZE];
-	sprintf(buffer, FTP_R202, param2);
+	sprintf(buffer, "param = '%s'", param2);
+	Log(buffer);
+	char param = param2[0];
+	switch (param)
+		{
+			case 'A':
+				{
+					nType = TYPE_ASCII;
+					sprintf(buffer, FTP_R200, param1);
+					break;
+				}
+			case 'I':
+				{
+					nType = TYPE_IMAGE;
+					sprintf(buffer, FTP_R200, param1);
+					break;
+				}
+			default:
+				{
+					sprintf(buffer, FTP_R504);
+					break;
+				}
+		}
 	SendReply(buffer);
 }
 
 int CFTPClient::HandleStruCommand(TParam1 param1, TParam2 param2)
 {
 	char buffer[BUF_SIZE];
-	sprintf(buffer, FTP_R202, param2);
+	sprintf(buffer, "param = '%s'", param2);
+	Log(buffer);
+	char param = param2[0];
+	switch (param)
+		{
+			case 'F':
+				{
+					nStructure = STRUCT_FILE;
+					sprintf(buffer, FTP_R200, param1);
+					break;
+				}
+			default:
+				{
+					sprintf(buffer, FTP_R504);
+					break;
+				}
+		}
 	SendReply(buffer);
 }
 
 int CFTPClient::HandleModeCommand(TParam1 param1, TParam2 param2)
 {
 	char buffer[BUF_SIZE];
-	sprintf(buffer, FTP_R202, param2);
+	sprintf(buffer, "param = '%s'", param2);
+	Log(buffer);
+	char param = param2[0];
+	switch (param)
+		{
+			case 'S':
+				{
+					nMode = MODE_STREAM;
+					sprintf(buffer, FTP_R200, param1);
+					break;
+				}
+			default:
+				{
+					sprintf(buffer, FTP_R504);
+					break;
+				}
+		}
 	SendReply(buffer);
 }
 
@@ -796,6 +866,7 @@ int CFTPClient::HandleSiteCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleSystCommand(TParam1 param1, TParam2 param2)
 {
+	SendReply(FTP_R215);
 }
 
 int CFTPClient::HandleStatCommand(TParam1 param1, TParam2 param2)
@@ -817,11 +888,61 @@ int CFTPClient::HandleStatCommand(TParam1 param1, TParam2 param2)
 		}
 		else{
 			//syslog(LOG_FTP | LOG_INFO, "no params for stat");
+			char *tmp;
 			strcpy(buffer, "Connected from: ");
 			strcat(buffer, commandSocket->Host());
 			strcat(buffer, "\nLogged in as: ");
 			strcat(buffer, userName);
-			strcat(buffer, "\nTYPE: ASCII, STRUcture: File, MODE: Stream");
+			strcat(buffer, "\nTYPE: ");
+			switch (nType)
+				{
+					case TYPE_ASCII:
+						{
+							tmp = "ASCII";
+							break;
+						}
+					case TYPE_IMAGE:
+						{
+							tmp = "IMAGE";
+							break;
+						}
+					default:
+						{
+							tmp = "<unknown>";
+							break;
+						}
+				}
+			strcat(buffer, tmp);
+			strcat(buffer, ", STRUcture: ");
+			switch (nStructure)
+				{
+					case STRUCT_FILE:
+						{
+							tmp = "File";
+							break;
+						}
+					default:
+						{
+							tmp = "<unknown>";
+							break;
+						}
+				}
+			strcat(buffer, tmp);
+			strcat(buffer, ", MODE: ");
+			switch (nMode)
+				{
+					case MODE_STREAM:
+						{
+							tmp = "Stream";
+							break;
+						}
+					default:
+						{
+							tmp = "<unknown>";
+							break;
+						}
+				}
+			strcat(buffer, tmp);
 			strcat(buffer, "\nTotal bytes transferred for this session: 000 (unknown)");
 			if (dataConnActive)
 				{

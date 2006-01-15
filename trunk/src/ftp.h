@@ -58,7 +58,7 @@ enum FTP_CMDS {
 #define FTP_R214S "214-Help:"
 #define FTP_R214E "214 Help: end of list."
 
-#define FTP_R215 "215 NAME system type."
+#define FTP_R215 "215 UNIX Type: L8"
 #define FTP_R220 "220 %s Service ready for new user."
 #define FTP_R221 "221 Service closing control connection. Good bye!"
 #define FTP_R225 "225 Data connection open; no transfer in progress."

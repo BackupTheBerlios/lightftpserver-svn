@@ -105,6 +105,7 @@ class CFTPClient{
 		void SetDataSocket(CSocket *newDataSocket);
 		
 		void SendReply(char *message);
+		char *CorrectRepresentation(char *message);
 		
 //	private:
 		int HandleUserCommand(TParam1 param1, TParam2 param2);

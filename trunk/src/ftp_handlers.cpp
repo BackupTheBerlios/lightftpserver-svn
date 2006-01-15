@@ -7,33 +7,34 @@ int CommandHandler::Handle(CFTPClient *instance, TParam1 param1, TParam2 param2)
 }
 
 #include "client.h"
-CommandHandler handlers[] = {{FTP_CUSER, "user", &CFTPClient::HandleUserCommand},
-			     {FTP_CPASS, "pass", &CFTPClient::HandlePassCommand},
-			     {FTP_CLIST, "list", &CFTPClient::HandleListCommand},
-			     {FTP_CNOOP, "noop", &CFTPClient::HandleNoopCommand},
-			     {FTP_CDELE, "dele",   &CFTPClient::HandleDeleCommand},
-			     {FTP_CCWD, "cwd",   &CFTPClient::HandleCwdCommand},
-			     {FTP_CCDUP, "cdup",   &CFTPClient::HandleCdupCommand},
-			     {FTP_CMKD, "mkd",   &CFTPClient::HandleMkdCommand},
-			     {FTP_CRMD, "rmd",   &CFTPClient::HandleRmdCommand},
-			     {FTP_CPWD, "pwd",   &CFTPClient::HandlePwdCommand},
-			     {FTP_CSTOR, "stor", &CFTPClient::HandleStorCommand},
-			     {FTP_CQUIT, "quit", &CFTPClient::HandleQuitCommand},
-			     {FTP_CHELP, "help", &CFTPClient::HandleHelpCommand},
-			     {FTP_CACCT, "acct", &CFTPClient::HandleAcctCommand},
-			     {FTP_CPASV, "pasv", &CFTPClient::HandlePasvCommand},
-			     {FTP_CSTRU, "stru", &CFTPClient::HandleStruCommand},
-			     {FTP_CSTAT, "stat", &CFTPClient::HandleStatCommand},
-			     {FTP_CTYPE, "type", &CFTPClient::HandleTypeCommand},
-			     {FTP_CSITE, "site", &CFTPClient::HandleSiteCommand},
-			     {FTP_CALLO, "allo", &CFTPClient::HandleAlloCommand},
-			     {FTP_CMODE, "mode", &CFTPClient::HandleModeCommand},
-			     {FTP_CREIN, "rein", &CFTPClient::HandleReinCommand},
-			     {FTP_CSMNT, "smnt", &CFTPClient::HandleSmntCommand},
-			     {FTP_CABOR, "abor", &CFTPClient::HandleAborCommand},
-			     {FTP_CNLST, "nlst", &CFTPClient::HandleNlstCommand}
-};
-
+CommandHandler handlers[] ={{FTP_CUSER, "user", &CFTPClient::HandleUserCommand},
+														{FTP_CPASS, "pass", &CFTPClient::HandlePassCommand},
+														{FTP_CLIST, "list", &CFTPClient::HandleListCommand},
+														{FTP_CNOOP, "noop", &CFTPClient::HandleNoopCommand},
+														{FTP_CDELE, "dele",   &CFTPClient::HandleDeleCommand},
+														{FTP_CCWD, "cwd",   &CFTPClient::HandleCwdCommand},
+														{FTP_CCDUP, "cdup",   &CFTPClient::HandleCdupCommand},
+														{FTP_CMKD, "mkd",   &CFTPClient::HandleMkdCommand},
+														{FTP_CRMD, "rmd",   &CFTPClient::HandleRmdCommand},
+														{FTP_CPWD, "pwd",   &CFTPClient::HandlePwdCommand},
+														{FTP_CSTOR, "stor", &CFTPClient::HandleStorCommand},
+														{FTP_CQUIT, "quit", &CFTPClient::HandleQuitCommand},
+														{FTP_CHELP, "help", &CFTPClient::HandleHelpCommand},
+														{FTP_CACCT, "acct", &CFTPClient::HandleAcctCommand},
+														{FTP_CPASV, "pasv", &CFTPClient::HandlePasvCommand},
+														{FTP_CPORT, "port", &CFTPClient::HandlePortCommand},
+														{FTP_CSTRU, "stru", &CFTPClient::HandleStruCommand},
+														{FTP_CSTAT, "stat", &CFTPClient::HandleStatCommand},
+														{FTP_CTYPE, "type", &CFTPClient::HandleTypeCommand},
+														{FTP_CSITE, "site", &CFTPClient::HandleSiteCommand},
+														{FTP_CALLO, "allo", &CFTPClient::HandleAlloCommand},
+														{FTP_CMODE, "mode", &CFTPClient::HandleModeCommand},
+														{FTP_CREIN, "rein", &CFTPClient::HandleReinCommand},
+														{FTP_CSMNT, "smnt", &CFTPClient::HandleSmntCommand},
+														{FTP_CABOR, "abor", &CFTPClient::HandleAborCommand},
+														{FTP_CNLST, "nlst", &CFTPClient::HandleNlstCommand},
+														{FTP_CSYST, "syst", &CFTPClient::HandleSystCommand}
+														 };
 int cHandlers = (sizeof(handlers) / sizeof(handlers[0]));
 
 /*

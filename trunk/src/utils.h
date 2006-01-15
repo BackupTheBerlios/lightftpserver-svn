@@ -32,7 +32,9 @@ Utils.h detailed description.
 #define SHOW_DEBUG_MESSAGES
 
 
+
 void Log(char *message); //wrapper for syslog(LOG_FTP | LOG_INFO, message) - easier to write
+void LogSpecialChars(char *message);
 
 /**
 Returns the local time as a string using the current locale.
