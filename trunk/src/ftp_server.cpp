@@ -396,17 +396,19 @@ int main(int argc, char** argv)
 				} else if (pid == 0) {
 					//child
 					//close(ssock);
-					delete serverSocket;
+// 					delete serverSocket;
+				  serverSocket->Close();
 					
 					CFTPClient *client = new CFTPClient(clientSocket);
 					client->Run();
-					delete client;
+ 					delete client;
 					//ftpService(csock);
 					exit(0);
 				} else {
 					// parent
 					syslog(LOG_FTP|LOG_INFO, "new connection");
-					delete clientSocket;
+// 					delete clientSocket;
+					clientSocket->Close();
 				}
 			}
   }
