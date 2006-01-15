@@ -647,6 +647,23 @@ int CFTPClient::HandleAborCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleDeleCommand(TParam1 param1, TParam2 param2)
 {
+  char buf[BUF_SIZE];
+  if (unlink(param2) == -1)
+    switch (errno) {
+    case EBUSY: {
+      sprintf(buf, FTP_R450);
+      break;
+    }
+    case ENAMETOOLONG: {
+      sprintf(buf, FTP_R501, param2);
+      break;
+    }
+    default:
+      sprintf(buf, FTP_R550);
+    }
+  else
+    sprintf(buf, FTP_R250);
+  SendReply(buf);
 }
 
 int CFTPClient::HandleRmdCommand(TParam1 param1, TParam2 param2)
