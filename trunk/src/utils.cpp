@@ -27,6 +27,11 @@ Utils.cpp long description.
 
 #include <time.h>
 
+void Log(char *message)
+{
+	syslog(LOG_FTP | LOG_INFO, message);
+}
+
 struct tm *GetCurrentLocalTime()
 {
 	time_t timp;

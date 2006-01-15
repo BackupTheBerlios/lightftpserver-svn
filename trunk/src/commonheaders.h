@@ -33,6 +33,7 @@ Commonheaders.h long description.
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <ctype.h> //for tolower()
 
 #include <syslog.h>
 

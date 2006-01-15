@@ -129,7 +129,7 @@
       <hidenonlocation>false</hidenonlocation>
     </groups>
     <tree>
-      <hidepatterns/>
+      <hidepatterns></hidepatterns>
       <hidenonprojectfiles>true</hidenonprojectfiles>
       <showvcsfields>true</showvcsfields>
     </tree>

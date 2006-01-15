@@ -44,6 +44,7 @@ CFTPClient::CFTPClient(CSocket *commandSocket)
 	szCurrentPath = NULL;
 	this->commandSocket = commandSocket;
 	dataSocket = new CSocket();
+	pasvDataSocket = NULL;
 }
 
 CFTPClient::~ CFTPClient()
@@ -91,7 +92,7 @@ int CFTPClient::Run()
 	int index;
 	fd_set fdsRead;
 	fd_set fdsWrite;
-	fd_set *fdsDataConn;
+	fd_set *fdsDataConn = NULL; //points to either fdsRead or fdsWrite
 	int n;
 	int sock;
 	timeval timeout;
@@ -114,7 +115,18 @@ int CFTPClient::Run()
 						}
 					fdsDataConn = (dataConnType == DATA_CONN_RECEIVE) ? &fdsRead : &fdsWrite;
 					FD_SET(sock, fdsDataConn);
+					if (pasvDataSocket)
+						{
+							sock = pasvDataSocket->Socket();
+							if (sock > n)
+								{
+									n = sock;
+								}
+							FD_SET(sock, fdsDataConn);
+						}
 				}
+			sprintf(caca, "fdsRead = %p, fdsWrite =%p, fdsDataConn = %p, dataConnType = %d, dataConnActive = %d", &fdsRead, &fdsWrite, fdsDataConn, dataConnType, dataConnActive);
+			syslog(LOG_FTP | LOG_INFO, caca);
 			select(n + 1, &fdsRead, &fdsWrite, NULL, &timeout);
 			if (FD_ISSET(commandSocket->Socket(), &fdsRead)) //data available on the PI
 				{
@@ -142,14 +154,17 @@ int CFTPClient::Run()
 										sprintf(caca, FTP_R500, buffer);
 									}
 								syslog(LOG_FTP | LOG_INFO, caca);
-								Handle(index, 0, buffer);
+								Handle(index, buffer, buffer);
 						}
 				}
 			syslog(LOG_FTP | LOG_INFO, "before data connection check");
-			if ((dataConnActive) && (FD_ISSET(dataSocket->Socket(), fdsDataConn))) //data available on the DTP
+			if ((fdsDataConn) && (dataConnActive))
 				{
-					syslog(LOG_FTP | LOG_INFO, "Data socket active");
-					DoDTP();
+					if ((FD_ISSET(dataSocket->Socket(), fdsDataConn)) || ((pasvDataSocket) && (FD_ISSET(pasvDataSocket->Socket(), fdsDataConn))))
+						{
+							syslog(LOG_FTP | LOG_INFO, "Data socket active");
+							DoDTP();
+						}
 				}
 		}
 	commandSocket->Send("Thanks for using Light ftp server ...\n");
@@ -165,8 +180,12 @@ int CFTPClient::TranslateMessage(char *buffer)
 {
 	int i;
 	char message[12]; //should be big enough :)
-	sscanf(buffer, "%[a-zA-Z0-9]", message);
-	//TODO convert to lowercase
+	sscanf(buffer, "%[a-zA-Z]", message);
+	int len = strlen(message);
+	for (i = 0; i < len; i++)
+		{
+			message[i] = tolower(message[i]);
+		}
 	for (i = 0; i < cHandlers; i++) //go through all the handlers and check for the given message
 		{
 			if (strcmp(handlers[i].message, message) == 0)
@@ -177,12 +196,18 @@ int CFTPClient::TranslateMessage(char *buffer)
 	return TRANSLATE_UNKNOWN;
 }
 
-int CFTPClient::Handle(int index, TParam1 param1, TParam2 param2)
+int CFTPClient::Handle(int index, TParam1 buffer, TParam2 param2)
 {
 	if (index != TRANSLATE_UNKNOWN)
 		{
+			int cLen = strlen(handlers[index].message);
+			char *param = NULL;
+			if (strlen(buffer) > cLen)
+				{
+					param = buffer + cLen + 1;
+				}
 			syslog(LOG_FTP | LOG_INFO, "Calling the handler method");
-			handlers[index].Handle(this, param1, param2);
+			handlers[index].Handle(this, buffer, param);
 		}
 		else{
 			char buffer[BUF_SIZE];
@@ -196,17 +221,19 @@ int CFTPClient::DoDTP()
 	char buffer[BUF_SIZE];
 	int size;
 	static CSocket *sock = NULL; //i fucking hate this stuff
+	sock = (dataConnType & DATA_CONN_FPASV) ? pasvDataSocket : dataSocket; //if type is pasv use the child socket
 	switch (dataConnType & 0xFF) //only the send or receive flag
 		{
 			case DATA_CONN_RECEIVE:
 				{
-					size = dataSocket->Receive(buffer, sizeof(buffer));
-					if (size >= 0)
+					Log("Inside DoDTP(), receiving ...");
+					size = sock->Receive(buffer, sizeof(buffer));
+					if (size > 0)
 						{
 							buffer[size - 1] = '\0';
 							fputs(buffer, dataFile);
 						}
-					if (size == 0)
+					if (size <= 0)
 						{
 							dataConnActive = DATA_CONN_STOPPED;
 							Disconnect(DISCONNECT_DATA);
@@ -216,28 +243,19 @@ int CFTPClient::DoDTP()
 				}
 			case DATA_CONN_SEND:
 				{
+					Log("Inside DoDTP(), sending ...");
+					sprintf(buffer, "dataFile = %p", dataFile);
+					Log(buffer);
 					if (!feof(dataFile))
 						{
 							fgets(buffer, sizeof(buffer), dataFile);
-							dataSocket->Send(buffer);
+							sock->Send(buffer);
 						}
 						else{
 							dataConnActive = DATA_CONN_STOPPED;
 							Disconnect(DISCONNECT_DATA);
+							CloseDTPFileDescriptor();
 							SendReply(FTP_R226);
-							switch (fileType)
-								{
-									case DATA_FILE_FILE:
-										{
-											fclose(dataFile);
-											break;
-										}
-									case DATA_FILE_PIPE:
-										{
-											pclose(dataFile);
-											break;
-										}
-								}
 						}
 					break;
 				}
@@ -249,6 +267,27 @@ int CFTPClient::DoDTP()
 		}
 }
 
+int CFTPClient::CloseDTPFileDescriptor()
+{
+	if (dataFile)
+		{
+			switch (fileType)
+				{
+					case DATA_FILE_FILE:
+						{
+							fclose(dataFile);
+							break;
+						}
+					case DATA_FILE_PIPE:
+						{
+							pclose(dataFile);
+							break;
+						}
+				}
+		}
+	dataFile = NULL;
+}
+
 int CFTPClient::Disconnect(int part)
 {
 	///\todo do disconnection
@@ -258,6 +297,12 @@ int CFTPClient::Disconnect(int part)
 				{
 					dataSocket->Disconnect();
 				}
+			if (pasvDataSocket)
+				{
+					pasvDataSocket->Disconnect();
+					delete pasvDataSocket;
+				}
+			pasvDataSocket = NULL;
 		}
 	if (part & DISCONNECT_COMMAND)
 		{
@@ -407,30 +452,39 @@ int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 {
 	//TODO get our ip and also generate random port
 	Disconnect(DISCONNECT_DATA);
-	int res = dataSocket->Bind(AF_INET, 12345, INADDR_ANY);
-	if (res != 0)
+	delete dataSocket; // nu mai stiu ce sa fac !!!!!
+	dataSocket = new CSocket(); // nu mai stiu ce sa fac !!!!!
+	int port = 12345; //dataSocket->Port();
+	int res = dataSocket->Bind(AF_INET, port, "127.0.0.1");
+	if (res < 0)
 		{
 			syslog(LOG_FTP | LOG_INFO, "Error at bind %m");
 		}
-	res = dataSocket->Listen(2);
-	if (res != 0)
+	res = dataSocket->Listen(16);
+	if (res < 0)
 	{
 		syslog(LOG_FTP | LOG_INFO, "Error at listen %m");
 	}
-
 	char buffer[BUF_SIZE];
-	int port = 12345; //dataSocket->Port();
-	sprintf(buffer, "port = %d", port);
+	sprintf(buffer, "port = %d, dataSocket = %p (%m)", port, dataSocket);
 	syslog(LOG_FTP | LOG_INFO, buffer);
 	sprintf(buffer, FTP_R227, "127.0.0.1", (port >> 8), (port & 0xFF));
-	syslog(LOG_FTP | LOG_INFO, buffer);
 	SendReply(buffer);
-	dataConnActive = DATA_CONN_ACTIVE;
+	//dataConnActive = DATA_CONN_ACTIVE;
 	dataConnType = DATA_CONN_FPASV;
-	CSocket *data = GetDataSocket()->Accept();
-	syslog(LOG_FTP | LOG_INFO, "before sleep(10) %m");
+	Log("Accepting pasv connection (please connect before continuing)  '%m' ...");
+	while(!pasvDataSocket)
+		{
+			pasvDataSocket = dataSocket->Accept();
+			char caca[200];
+			sprintf(caca, "pasvDataSocket = %p, dataSocket = %p %s ('%m')", pasvDataSocket, dataSocket, strerror(dataSocket->GetLastError()));
+			Log(caca);
+		}
+	Log("before sleep(10) '%m'");
 	sleep(10);
-	dataSocket = data;
+	Log("After Accept()");
+	SendReply("Sleepy time over");
+	syslog(LOG_FTP | LOG_INFO, buffer);
 	//PasvAcceptWorkerThread(this);
 /*	pthread_t thread;
 	res = pthread_create(&thread, NULL, PasvAcceptWorkerThread, (void *) this);
@@ -443,9 +497,6 @@ int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 		else{
 			syslog(LOG_FTP | LOG_INFO, "Success:  pthread_create %m");
 		}*/
-	syslog(LOG_FTP | LOG_INFO, "before sleep(20)");
-	sleep(20);
-	syslog(LOG_FTP | LOG_INFO, "cacat cu muci");
 }
 
 int CFTPClient::HandleTypeCommand(TParam1 param1, TParam2 param2)
@@ -514,6 +565,7 @@ int CFTPClient::HandleAborCommand(TParam1 param1, TParam2 param2)
 			Disconnect(DISCONNECT_DATA);
 			dataConnActive = DATA_CONN_STOPPED;
 			dataConnType = 0;
+			CloseDTPFileDescriptor();
 			SendReply(FTP_R226);
 		}
 }
@@ -548,12 +600,10 @@ int CFTPClient::HandleListCommand(TParam1 param1, TParam2 param2)
 			if (dataConnActive)
 				{
 					char buffer[BUF_SIZE];
-					char *param = param2 + 5;
-					int len = strlen(param2);
 					strcpy(buffer, "ls -la ");
-					if (len > 5) // we have a param
+					if (param2) // we have a param
 						{
-							strcat(buffer, param);
+							strcat(buffer, param2);
 						}
 						else{
 							strcat(buffer, GetCurrentPath());
@@ -564,8 +614,9 @@ int CFTPClient::HandleListCommand(TParam1 param1, TParam2 param2)
 							dataFile = fin;
 							SendReply(FTP_R150);
 							fileType = DATA_FILE_PIPE;
-							fgets(buffer, sizeof(buffer), fin); //get the "total ..." line
+							fgets(buffer, sizeof(buffer), fin); //skip the "total ..." line
 							dataConnType |= DATA_CONN_SEND;
+							dataConnActive = DATA_CONN_ACTIVE;
 						}
 				}
 				else{
@@ -584,12 +635,10 @@ int CFTPClient::HandleNlstCommand(TParam1 param1, TParam2 param2)
 			if (dataConnActive)
 				{
 					char buffer[BUF_SIZE];
-					char *param = param2 + 5;
-					int len = strlen(param2);
 					strcpy(buffer, "ls -1 ");
-					if (len > 5) // we have a param
+					if (param2) // we have a param
 						{
-							strcat(buffer, param);
+							strcat(buffer, param2);
 						}
 						else{
 							strcat(buffer, GetCurrentPath());
@@ -600,8 +649,9 @@ int CFTPClient::HandleNlstCommand(TParam1 param1, TParam2 param2)
 							dataFile = fin;
 							SendReply(FTP_R150);
 							fileType = DATA_FILE_PIPE;
-							fgets(buffer, sizeof(buffer), fin); //get the "total ..." line
+							//fgets(buffer, sizeof(buffer), fin); //skip the "total ..." line
 							dataConnType |= DATA_CONN_SEND;
+							dataConnActive = DATA_CONN_ACTIVE;
 						}
 				}
 				else{
@@ -623,15 +673,13 @@ int CFTPClient::HandleSystCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleStatCommand(TParam1 param1, TParam2 param2)
 {
-	int len = strlen(param2);
 	char buffer[BUF_SIZE];
 	SendReply(FTP_R211S);
-	if (len > 5)
+	if (param2)
 		{
 			syslog(LOG_FTP | LOG_INFO, "received param for stat");
-			char *param = param2 + 5;
 			strcpy(buffer, "ls -la ");
-			strcat(buffer, param);
+			strcat(buffer, param2);
 			FILE *fin = popen(buffer, "r");
 			while (!feof(fin))
 				{

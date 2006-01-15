@@ -60,33 +60,35 @@
 #define DATA_FILE_PIPE		0x00001
 #define DATA_FILE_FILE		0x00002
 
-typedef long long TParam1;
-typedef char * TParam2; //the raw sent message
+typedef char * TParam1; //the raw sent message
+typedef char * TParam2; //the params of the command
 
 //needs work
 class CFTPClient{
 	protected:
 		char *szCurrentPath;
-		char *userName;
-		int nMode;
-		int nType;
-		int nStructure;
+		char *userName; //user's name
+		int nMode; //MODE
+		int nType; //TYPE
+		int nStructure; //STRUcture type
 		int nPathSize;
-		int connected;
-		int dataConnActive;
-		int dataConnType;
-		FILE *dataFile;
-		int fileType;
+		int connected; //are we connected - i think it's not used currently
+		int dataConnActive; //if DTP is active (DATA_CONN_STOPPED || DATA_CONN_ACTIVE)
+		int dataConnType; //(DATA_CONN_RECEIVE || DATA_CONN_SEND ) | (DATA_CONN_FPASV || DATA_CONN_FPORT)
+		FILE *dataFile; //open file descriptor - the handlers should open this FD, the DTP connection will close it
+		int fileType; //DATA_FILE_FILE | DATA_FILE_PIPE
 		int userEntered;
-		int loggedIn;
-		CSocket *commandSocket;
-		CSocket *dataSocket;
+		int loggedIn; //if user an pass ok
+		CSocket *commandSocket; //PI
+		CSocket *dataSocket; //DTP
+		CSocket *pasvDataSocket; //DTP for pasv connections - the child socket
 		
 		int WaitForMessage(char *buffer, int size);
 		int TranslateMessage(char *buffer);
 		
-		int Handle(int index, TParam1 param1, TParam2 param2);
+		int Handle(int index, TParam1 buffer, TParam2 param2);
 		int DoDTP();
+		int CloseDTPFileDescriptor();
 		
 	public:
 		CFTPClient(CSocket *commandSocket);

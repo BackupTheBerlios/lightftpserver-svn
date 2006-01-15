@@ -80,7 +80,7 @@ CSocket *CSocket::Accept()
 	
 	res = accept(nSocket, &addr, &size);
 	nSocketError = errno;
-	if (res > 0)
+	if (res >= 0)
 		{
 			tmp = new CSocket();
 			tmp->Close();
@@ -132,6 +132,10 @@ int CSocket::Blocking(int newState)
 	return res;
 }
 
+int CSocket::GetLastError()
+{
+	return nSocketError;
+}
 
 int CSocket::Port()
 {
