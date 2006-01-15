@@ -604,6 +604,7 @@ int CFTPClient::HandleStouCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleAppeCommand(TParam1 param1, TParam2 param2)
 {
+
 }
 
 int CFTPClient::HandleAlloCommand(TParam1 param1, TParam2 param2)
@@ -650,6 +651,7 @@ int CFTPClient::HandleRmdCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleMkdCommand(TParam1 param1, TParam2 param2)
 {
+  syslog(LOG_FTP|LOG_DEBUG, "%s %s",param1, param2);
 }
 
 int CFTPClient::HandlePwdCommand(TParam1 param1, TParam2 param2)

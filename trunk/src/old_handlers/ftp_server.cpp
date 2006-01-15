@@ -32,16 +32,16 @@
 #include "commonheaders.h"
 
 #include "configUtils.h"
-#include "ftp_handlers.h"
 #include "client.h"
 #include "ftp.h"
-
+#include "ftp_handlers.h"
 //#include "logClient.h"
 #include <inttypes.h>
 #include <netdb.h>
 #include <signal.h>
 #include <stdint.h>
 #include <string.h>
+#include <syslog.h>
 
 #include <time.h>
 #include <unistd.h>
@@ -51,8 +51,7 @@
 #include <sys/stat.h>
 
 #define MAX_CLIENTS 64
-#define FTP_PORT 5001
-
+#define BUF_SIZE 1024
 
 char cr = 13, lf = 10;
 
@@ -73,13 +72,12 @@ void HandleChildTermination(int nSignal)
   wait(&stat);
   syslog(LOG_FTP | LOG_INFO, "slave exited with status: %d", stat);
 }
-
 int HookTerminationSignals()
 {
   signal(SIGQUIT, HandleTerminationSignals);
   signal(SIGTERM, HandleTerminationSignals);
   signal(SIGINT, HandleTerminationSignals);
-//  signal(SIGCHLD, HandleChildTermination); - popen nu mai functioneaza
+  signal(SIGCHLD, HandleChildTermination);
 }
 
 void MakeDaemon()
@@ -122,8 +120,6 @@ void MakeDaemon()
 }
 
 
-/*TODO ioni - miscarea asta nu am inteles-o. Nu am facut CFTPClient ca sa fie totul centralizat ? 
-	nu de aia am facut si clasa CSocket, sa fie mai usor de lucrat cu ele ?
 
 int activeTCPLowLevel(u_int32_t address, u_int16_t port) {
   struct sockaddr_in server_addr;
@@ -273,10 +269,8 @@ void ftpService(int sock) {
     if (cmd != NULL) {
       // look for handler
       for (i = 0; i < _FTPCMDS_END; i++)
-
-{//	if (strcasecmp(cmd, ftpcmds[i]) == 0) {
-//	  ftphandlers[i](cmd, arg, (char*)&reply, BUF_SIZE, &terminate);
-
+	if (strcasecmp(cmd, ftpcmds[i]) == 0) {
+	  ftphandlers[i](cmd, arg, (char*)&reply, BUF_SIZE, &terminate);
 // 	  // say good bye and terminate
 // 	  if (i == FTP_CQUIT) {
 // 	    terminate = true;
@@ -297,14 +291,12 @@ void ftpService(int sock) {
 
   close(sock);
 }
-*/
 
 int main(int argc, char** argv)
 
 {
   struct sockaddr_in server_address;
-  //int ssock, csock;
-  CSocket *clientSocket, *serverSocket;
+  int ssock, csock;
 
   server_address.sin_port = htons(21);
   server_address.sin_addr.s_addr = INADDR_ANY;
@@ -357,57 +349,30 @@ int main(int argc, char** argv)
 
   syslog(LOG_FTP | LOG_INFO, "Preparing to start server ...");
 
-	
-	serverSocket = new CSocket();
-	int res;
-	res = serverSocket->Bind(AF_INET, FTP_PORT, INADDR_ANY);
-	if (res < 0)
-		{
-			syslog(LOG_FTP | LOG_INFO, "Error at Bind() %m");
-			exit(1);
-		}
-	res = serverSocket->Listen(MAX_CLIENTS);
-	if (res < 0)
-		{
-			syslog(LOG_FTP | LOG_INFO, "Error at Listen() %m");
-			exit(2);
-		}
-	
-	/*TODO ioni - de ce nu folosim CSocket ?
   ssock = passiveTCPLowLevel(server_address.sin_addr.s_addr,
 			     server_address.sin_port,
 			     MAX_CLIENTS);
-	*/
 
   syslog(LOG_FTP | LOG_INFO, "Lightweight ftp server started ... Waiting for connections ...");
 
   while (1) {
     int pid;
     // show no interest in the address of the remote host
-    //csock = accept(ssock, NULL, NULL);
-    clientSocket = serverSocket->Accept();
-    if (clientSocket)
-    	{
-				pid = fork();
-				if (pid == -1) {
-					// error
-					syslog(LOG_FTP|LOG_ERR, "main: fork: %m");
-					exit(1);
-				} else if (pid == 0) {
-					//child
-					//close(ssock);
-					delete serverSocket;
-					
-					CFTPClient *client = new CFTPClient(clientSocket);
-					client->Run();
-					delete client;
-					//ftpService(csock);
-					exit(0);
-				} else {
-					// parent
-					syslog(LOG_FTP|LOG_INFO, "new connection");
-					delete clientSocket;
-				}
-			}
+    csock = accept(ssock, NULL, NULL);
+    pid = fork();
+    if (pid == -1) {
+      // error
+      syslog(LOG_FTP|LOG_ERR, "main: fork: %m");
+      exit(1);
+    } else if (pid == 0) {
+      //child
+      close(ssock);
+      ftpService(csock);
+      exit(0);
+    } else {
+      // parent
+      syslog(LOG_FTP|LOG_INFO, "new connection");
+      close(csock);
+    }
   }
 }
