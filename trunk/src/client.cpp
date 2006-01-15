@@ -436,19 +436,39 @@ int CFTPClient::HandleAcctCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleCwdCommand(TParam1 param1, TParam2 param2)
 {
-	if (!loggedIn)
-		{
-			SendReply("You need to be logged in first");
-		}
-		else{
-			if (strlen(param2) > 4)
-				{
-					char *pos = param2 + 4;
-					//TODO trim pos of spaces and newline
-					SetCurrentPath(pos);
-				}
-			SendReply("path changed ok");
-		}
+  syslog(LOG_FTP|LOG_DEBUG, "%s %s", param1, param2);
+  char buf[BUF_SIZE];
+  if (!loggedIn) {
+    syslog(LOG_FTP|LOG_DEBUG, "530");
+    sprintf(buf, FTP_R530);
+  }
+  else{
+    if (chdir(param2) == -1) {
+      syslog(LOG_FTP|LOG_DEBUG, "%m");
+      switch (errno) {
+      case ENOTDIR: {
+	syslog(LOG_FTP|LOG_DEBUG, "501");
+	sprintf(buf, FTP_R501);
+	break;
+      }
+      default: {
+	syslog(LOG_FTP|LOG_DEBUG, "550");
+	sprintf(buf, FTP_R550);
+      }
+      }
+    }
+    else {
+      syslog(LOG_FTP|LOG_DEBUG, "200");
+      sprintf(buf, FTP_R200, "CWD");
+    }
+//     if (strlen(param2) > 4)
+//       {
+// 	char *pos = param2 + 4;
+// 	//TODO trim pos of spaces and newline
+// 	SetCurrentPath(pos);
+//       }
+    SendReply(buf);
+  }
 }
 
 int CFTPClient::HandleCdupCommand(TParam1 param1, TParam2 param2)
