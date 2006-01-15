@@ -396,7 +396,7 @@ int main(int argc, char** argv)
 				} else if (pid == 0) {
 					//child
 					//close(ssock);
-				  //serverSocket->Close();
+				  serverSocket->Close();
 					CFTPClient *client = new CFTPClient(clientSocket);
 					client->Run();
  					delete client;
