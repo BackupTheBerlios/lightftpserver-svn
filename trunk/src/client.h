@@ -77,7 +77,7 @@ class CFTPClient{
 		int dataConnType; //(DATA_CONN_RECEIVE || DATA_CONN_SEND ) | (DATA_CONN_FPASV || DATA_CONN_FPORT)
 		FILE *dataFile; //open file descriptor - the handlers should open this FD, the DTP connection will close it
 		int fileType; //DATA_FILE_FILE | DATA_FILE_PIPE
-		int userEntered;
+		int userEntered; // should not be needed anymore userName instead
 		int loggedIn; //if user an pass ok
 		CSocket *commandSocket; //PI
 		CSocket *dataSocket; //DTP

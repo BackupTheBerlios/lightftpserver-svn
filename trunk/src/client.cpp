@@ -407,9 +407,16 @@ void CFTPClient::SetDataSocket(CSocket *newDataSocket)
 
 int CFTPClient::HandleUserCommand(TParam1 param1, TParam2 param2)
 {
-	//TODO mai trebuie verificat aici
-	SendReply("you just used the USER command");
-	userEntered = 1;
+  char buf[BUF_SIZE];
+  if (param2 == NULL)
+    sprintf(buf, FTP_R500, param2);
+  else {
+    userName = strdup(param2);
+    sprintf(buf, FTP_R331, param2);
+  }
+  SendReply(buf);
+  // not needed
+  userEntered = 1;
 }
 
 int CFTPClient::HandlePassCommand(TParam1 param1, TParam2 param2)
