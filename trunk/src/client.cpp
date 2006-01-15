@@ -359,7 +359,7 @@ int CFTPClient::Disconnect(int part)
 
 char *CFTPClient::GetCurrentPath()
 {
-	return szCurrentPath;
+  return get_current_dir_name();
 }
 
 void CFTPClient::SetCurrentPath(char *newPath)
