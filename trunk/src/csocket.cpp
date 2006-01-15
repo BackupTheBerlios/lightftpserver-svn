@@ -42,6 +42,7 @@ int CSocket::Disconnect(int how)
 {
 	int res = shutdown(nSocket, how);
 	nSocketError = errno;
+	bConnected = FALSE;
 	return res;
 }
 
@@ -85,8 +86,10 @@ CSocket *CSocket::Accept()
 			tmp->Close();
 			tmp->nSocket = res;
 			memmove(&(tmp->addrData), &addr, sizeof(addrData));
+			bConnected = TRUE;
 		}
 		else{
+			bConnected = FALSE;
 			tmp = NULL;
 		}
 	return tmp;
@@ -96,6 +99,7 @@ int CSocket::Connect(sa_family_t family, int port, char *host)
 {
 	sockaddr_in tmp = CreateSocketAddress(family, port, host);
 	int res = connect(nSocket, (sockaddr *) &tmp, sizeof(tmp));
+	bConnected = (res == 0);
 	nSocketError = errno;
 	return res;
 }
@@ -139,3 +143,7 @@ char *CSocket::Host()
 	return inet_ntoa(addrData.sin_addr);
 }
 
+int CSocket::Socket()
+{
+	return nSocket;
+}

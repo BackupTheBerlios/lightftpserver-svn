@@ -23,6 +23,7 @@
 
 #include "commonheaders.h"
 #include <syslog.h>
+#include <sys/select.h> //new posix standard
 
 
 #define DISCONNECT_DATA          1
@@ -46,6 +47,19 @@
 #define MODE_BLOCK			2
 #define MODE_COMPRESSED	3
 
+
+#define DATA_CONN_STOPPED 0x00000
+#define DATA_CONN_ACTIVE	0x00001
+
+#define DATA_CONN_RECEIVE 0x00001
+#define DATA_CONN_SEND		0x00002
+
+#define DATA_CONN_FPASV		0x00100
+#define DATA_CONN_FPORT		0x00200
+
+#define DATA_FILE_PIPE		0x00001
+#define DATA_FILE_FILE		0x00002
+
 typedef long long TParam1;
 typedef char * TParam2; //the raw sent message
 
@@ -59,6 +73,10 @@ class CFTPClient{
 		int nStructure;
 		int nPathSize;
 		int connected;
+		int dataConnActive;
+		int dataConnType;
+		FILE *dataFile;
+		int fileType;
 		int userEntered;
 		int loggedIn;
 		CSocket *commandSocket;
@@ -68,6 +86,7 @@ class CFTPClient{
 		int TranslateMessage(char *buffer);
 		
 		int Handle(int index, TParam1 param1, TParam2 param2);
+		int DoDTP();
 		
 	public:
 		CFTPClient(CSocket *commandSocket);
@@ -79,6 +98,9 @@ class CFTPClient{
 		
 		char *GetCurrentPath();
 		void SetCurrentPath(char *newPath);
+		
+		CSocket *GetDataSocket();
+		void SetDataSocket(CSocket *newDataSocket);
 		
 		void SendReply(char *message);
 		

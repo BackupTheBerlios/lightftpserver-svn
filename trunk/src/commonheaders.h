@@ -36,6 +36,8 @@ Commonheaders.h long description.
 
 #include <syslog.h>
 
+#include <pthread.h>
+
 //socket stuff
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -15,7 +15,18 @@ CommandHandler handlers[] = {{FTP_CUSER, "user", &CFTPClient::HandleUserCommand}
 														 {FTP_CPWD, "pwd",   &CFTPClient::HandlePwdCommand},
 														 {FTP_CSTOR, "stor", &CFTPClient::HandleStorCommand},
 														 {FTP_CQUIT, "quit", &CFTPClient::HandleQuitCommand},
-														 {FTP_CHELP, "help", &CFTPClient::HandleHelpCommand}
+														 {FTP_CHELP, "help", &CFTPClient::HandleHelpCommand},
+														 {FTP_CACCT, "acct", &CFTPClient::HandleAcctCommand},
+														 {FTP_CPASV, "pasv", &CFTPClient::HandlePasvCommand},
+														 {FTP_CSTRU, "stru", &CFTPClient::HandleStruCommand},
+														 {FTP_CSTAT, "stat", &CFTPClient::HandleStatCommand},
+														 {FTP_CTYPE, "type", &CFTPClient::HandleTypeCommand},
+														 {FTP_CSITE, "site", &CFTPClient::HandleSiteCommand},
+														 {FTP_CALLO, "allo", &CFTPClient::HandleAlloCommand},
+														 {FTP_CMODE, "mode", &CFTPClient::HandleModeCommand},
+														 {FTP_CREIN, "rein", &CFTPClient::HandleReinCommand},
+														 {FTP_CSMNT, "smnt", &CFTPClient::HandleSmntCommand},
+														 {FTP_CABOR, "abor", &CFTPClient::HandleAborCommand}
 														 };
 
 int cHandlers = (sizeof(handlers) / sizeof(handlers[0]));

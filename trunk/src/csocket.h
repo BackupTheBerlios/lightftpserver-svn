@@ -52,9 +52,11 @@ class CSocket{
 		int Blocking(int newState);
 		int Close();
 		
+		
 		char IsConnected();
 		char *Host();
 		int Port();
+		int Socket();
 		int GetLastError();
 };
 
