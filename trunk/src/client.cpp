@@ -671,9 +671,9 @@ int CFTPClient::HandleMkdCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandlePwdCommand(TParam1 param1, TParam2 param2)
 {
-	char buffer[BUF_SIZE];
-	sprintf(buffer, "Current working directory = %s", szCurrentPath);
-	SendReply(buffer);
+  char buffer[BUF_SIZE];
+  sprintf(buffer, FTP_R257P, get_current_dir_name());
+  SendReply(buffer);
 }
 
 int CFTPClient::HandleListCommand(TParam1 param1, TParam2 param2)
