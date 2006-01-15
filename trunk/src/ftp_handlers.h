@@ -7,6 +7,8 @@
 #include "client.h"
 #include "ftp.h"
 #include "callback.h"
+#include <shadow.h>
+#include <pwd.h>
 
 
 #define MESSAGE_SIZE 64

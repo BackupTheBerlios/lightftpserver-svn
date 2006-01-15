@@ -455,18 +455,43 @@ int CFTPClient::HandleUserCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandlePassCommand(TParam1 param1, TParam2 param2)
 {
-	//TODO trebuie facuta loginarea calumea
-	//SendReply("What ? you want a password too ?");
-	if (userEntered)
-		{
-			SendReply(FTP_R230);
-			//SendReply("Congratulations, you're now logged in");
-			loggedIn = 1;
-			SetCurrentPath("~");
-		}
-		else{
-			SendReply("You need to use USER first");
-		}
+  char buf[BUF_SIZE];
+  struct spwd* tmps;
+  struct passwd* tmpp;
+  char salt[12];
+//   uid_t euid;
+//   gid_t egid;
+
+  if (userName != NULL) {
+    // store the effective user id
+//     euid = geteuid();
+//     egid = getgid();
+
+//     syslog(LOG_FTP|LOG_DEBUG, "uid:%d gid:%d", euid, egid);
+
+    // try to become root
+    if (seteuid(0) == -1)
+      // won't be able to change euid, so fail
+      sprintf(buf, FTP_R530);
+    else
+      // try to read shadow and compare pass entry with encrypted argument
+      if (((tmps = getspnam(userName)) != NULL) &&
+	  (strcmp(tmps->sp_pwdp, crypt(param2, strncpy(salt, tmps->sp_pwdp, 11))) == 0)) {
+	
+	tmpp = getpwnam(userName);
+	
+	// try to change to the user's default group
+	setegid(tmpp->pw_gid);
+	seteuid(tmpp->pw_uid);
+	sprintf(buf, FTP_R230, param2);
+      }
+    // make sure entire logging process starts from the begining
+    free(userName);
+    userName = NULL;
+  } else
+    // PASS command before USER
+    sprintf(buf, FTP_R503);
+  SendReply(buf);
 }
 
 int CFTPClient::HandleAcctCommand(TParam1 param1, TParam2 param2)
