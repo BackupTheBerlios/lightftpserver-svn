@@ -605,7 +605,7 @@ int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 					syslog(LOG_FTP | LOG_INFO, "Error at bind %m");
 				}
 		}
-	port--;
+	port++;
 	res = dataSocket->Listen(16);
 	if (res < 0)
 	{
