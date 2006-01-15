@@ -76,7 +76,7 @@ CSocket *CSocket::Accept()
 	int res;
 	CSocket *tmp;
 	sockaddr addr;
-	socklen_t size;
+	socklen_t size = sizeof(sockaddr);
 	
 	res = accept(nSocket, &addr, &size);
 	nSocketError = errno;
