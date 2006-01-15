@@ -436,39 +436,23 @@ int CFTPClient::HandleAcctCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleCwdCommand(TParam1 param1, TParam2 param2)
 {
-  syslog(LOG_FTP|LOG_DEBUG, "%s %s", param1, param2);
   char buf[BUF_SIZE];
-  if (!loggedIn) {
-    syslog(LOG_FTP|LOG_DEBUG, "530");
-    sprintf(buf, FTP_R530);
-  }
-  else{
-    if (chdir(param2) == -1) {
-      syslog(LOG_FTP|LOG_DEBUG, "%m");
-      switch (errno) {
-      case ENOTDIR: {
-	syslog(LOG_FTP|LOG_DEBUG, "501");
-	sprintf(buf, FTP_R501);
-	break;
-      }
-      default: {
-	syslog(LOG_FTP|LOG_DEBUG, "550");
-	sprintf(buf, FTP_R550);
-      }
-      }
+
+  if (!loggedIn)
+    sprintf(buf, FTP_R530 );
+  else if (chdir(param2) == -1)
+    switch (errno) {
+    case ENOTDIR: {
+      sprintf(buf, FTP_R501);
+      break;
     }
-    else {
-      syslog(LOG_FTP|LOG_DEBUG, "200");
-      sprintf(buf, FTP_R200, "CWD");
+    default:
+      sprintf(buf, FTP_R550);
     }
-//     if (strlen(param2) > 4)
-//       {
-// 	char *pos = param2 + 4;
-// 	//TODO trim pos of spaces and newline
-// 	SetCurrentPath(pos);
-//       }
-    SendReply(buf);
-  }
+  else
+    sprintf(buf, FTP_R200, "CWD");
+
+  SendReply(buf);
 }
 
 int CFTPClient::HandleCdupCommand(TParam1 param1, TParam2 param2)
