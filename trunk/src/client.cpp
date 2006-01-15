@@ -651,7 +651,18 @@ int CFTPClient::HandleRmdCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleMkdCommand(TParam1 param1, TParam2 param2)
 {
-  syslog(LOG_FTP|LOG_DEBUG, "%s %s",param1, param2);
+  char buffer[BUF_SIZE];
+  if (mkdir(param2, S_IRWXU) == -1)
+    switch (errno) {
+    case ENAMETOOLONG:
+    case ENOTDIR: {
+      sprintf(buffer, FTP_R501);
+      break;
+    }
+    default: sprintf(buffer, FTP_R550);
+    } else
+      sprintf(buffer, FTP_R257C, param2);
+  SendReply(buffer);
 }
 
 int CFTPClient::HandlePwdCommand(TParam1 param1, TParam2 param2)
