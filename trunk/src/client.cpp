@@ -33,7 +33,7 @@ CFTPClient::CFTPClient(CSocket *commandSocket)
 	connected = 0;
 	nPathSize = 0;
 	loggedIn = 0;
-	userEntered = 0;
+// 	userEntered = 0;
 	dataConnActive = DATA_CONN_STOPPED;
 	dataConnType = 0;
 	dataFile = NULL;
@@ -450,7 +450,7 @@ int CFTPClient::HandleUserCommand(TParam1 param1, TParam2 param2)
   }
   SendReply(buf);
   // not needed
-  userEntered = 1;
+//   userEntered = 1;
 }
 
 int CFTPClient::HandlePassCommand(TParam1 param1, TParam2 param2)
@@ -484,6 +484,7 @@ int CFTPClient::HandlePassCommand(TParam1 param1, TParam2 param2)
 	setegid(tmpp->pw_gid);
 	seteuid(tmpp->pw_uid);
 	sprintf(buf, FTP_R230, param2);
+	loggedIn = 1;
       }
     // make sure entire logging process starts from the begining
     free(userName);
@@ -591,35 +592,50 @@ void *PasvAcceptWorkerThread(void *param)
 
 int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 {
-// 	TODO get our ip and also generate random port
-	Disconnect(DISCONNECT_DATA);
-	delete dataSocket; //WHY ??
-	dataSocket = new CSocket(); //WHY ??? WTF
-	int port; //dataSocket->Port();
-	int res = 1;
-	for (port = 64000; (res != 0); port--) //find an open port
-		{
-			res = dataSocket->Bind(AF_INET, port, "127.0.0.1");
-			if (res != 0)
-				{
-					syslog(LOG_FTP | LOG_INFO, "Error at bind %m");
-				}
-		}
-	port++;
-	res = dataSocket->Listen(16);
-	if (res < 0)
-	{
-		syslog(LOG_FTP | LOG_INFO, "Error at listen %m");
-	}
-	char buffer[BUF_SIZE];
-	sprintf(buffer, FTP_R227, "127,0,0,1", (port >> 8), (port & 0xFF));
-	SendReply(buffer);
-	dataConnType = DATA_CONN_FPASV;
-	Log("Accepting pasv connection (please connect before continuing)  '%m' ...");
-	while(!pasvDataSocket)
-		{
-			pasvDataSocket = dataSocket->Accept();
-		}
+  struct sockaddr_in my_addr;
+  socklen_t my_addr_size ;
+  char dottedquad[INET_ADDRSTRLEN];
+  Disconnect(DISCONNECT_DATA);
+  delete dataSocket; //WHY ??
+  dataSocket = new CSocket(); //WHY ??? WTF
+  // 	int port; //dataSocket->Port();
+  int res = 1;
+  // 	for (port = 64000; (res != 0); port--) //find an open port
+  // 		{
+  // 			res = dataSocket->Bind(AF_INET, port, "127.0.0.1");
+  // 			if (res != 0)
+  // 				{
+  // 					syslog(LOG_FTP | LOG_INFO, "Error at bind %m");
+  // 				}
+  // 		}
+  // 	port++;
+  res = dataSocket->Listen(16);
+  if (res < 0)
+    {
+      syslog(LOG_FTP | LOG_INFO, "Error at listen %m");
+    }
+  // find ip and port
+  my_addr_size = sizeof(my_addr);
+  if (getsockname(dataSocket->Socket(), (struct sockaddr*)&my_addr, &my_addr_size) == -1)
+    syslog(LOG_FTP|LOG_DEBUG, "getsockname: %m");
+  // dotted representation of addr
+  if (inet_ntop(AF_INET, &my_addr.sin_addr, (char*)&dottedquad, INET_ADDRSTRLEN) == NULL) 
+    syslog(LOG_FTP|LOG_DEBUG, "inet_ntop: %m");
+  // replace dot with comma - should be a smarter way to do it
+  for (int i = strlen(dottedquad); i >=0; i--)
+    if (dottedquad[i] == '.')
+      dottedquad[i] = ',';
+	
+  char buffer[BUF_SIZE];
+  // 	sprintf(buffer, FTP_R227, "127,0,0,1", (port >> 8), (port & 0xFF));
+  sprintf(buffer, FTP_R227, dottedquad, (my_addr.sin_port >> 8), (my_addr.sin_port & 0xFF));
+  SendReply(buffer);
+  dataConnType = DATA_CONN_FPASV;
+  Log("Accepting pasv connection (please connect before continuing)  '%m' ...");
+  while(!pasvDataSocket)
+    {
+      pasvDataSocket = dataSocket->Accept();
+    }
 }
 
 int CFTPClient::HandleTypeCommand(TParam1 param1, TParam2 param2)
