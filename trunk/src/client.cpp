@@ -457,6 +457,7 @@ int CFTPClient::HandleCwdCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleCdupCommand(TParam1 param1, TParam2 param2)
 {
+  HandleCwdCommand(param1, "..");
 }
 
 int CFTPClient::HandleSmntCommand(TParam1 param1, TParam2 param2)

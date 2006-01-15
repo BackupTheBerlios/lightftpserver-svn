@@ -13,6 +13,7 @@ CommandHandler handlers[] = {{FTP_CUSER, "user", &CFTPClient::HandleUserCommand}
 			     {FTP_CNOOP, "noop", &CFTPClient::HandleNoopCommand},
 			     {FTP_CDELE, "dele",   &CFTPClient::HandleDeleCommand},
 			     {FTP_CCWD, "cwd",   &CFTPClient::HandleCwdCommand},
+			     {FTP_CCDUP, "cdup",   &CFTPClient::HandleCdupCommand},
 			     {FTP_CMKD, "mkd",   &CFTPClient::HandleMkdCommand},
 			     {FTP_CRMD, "rmd",   &CFTPClient::HandleRmdCommand},
 			     {FTP_CPWD, "pwd",   &CFTPClient::HandlePwdCommand},
