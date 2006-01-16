@@ -26,9 +26,14 @@
 #define FALSE 0 
 #define TRUE 1
 
+/**
+Wrapper around a linux socket.
+
+Provides several methods to send, receive data and change the socket options. It also provides an easy way to check for errors.
+*/
 class CSocket{
 	protected:
-		char bConnected;
+		char bConnected; ///TRUE if we're connected, FALSE otherwise.
 //		char szHost[64];
 //		int nPort;
 		int nSyncronous;

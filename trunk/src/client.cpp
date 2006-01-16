@@ -29,9 +29,8 @@
 
 CFTPClient::CFTPClient(CSocket *commandSocket)
 {
-	///\todo do constructor
 	connected = 0;
-	nPathSize = 0;
+//	nPathSize = 0;
 	loggedIn = 0;
 // 	userEntered = 0;
 	dataConnActive = DATA_CONN_STOPPED;
@@ -41,7 +40,7 @@ CFTPClient::CFTPClient(CSocket *commandSocket)
 	nType = TYPE_ASCII;
 	nStructure = STRUCT_FILE;
 	nMode = MODE_STREAM;
-	szCurrentPath = NULL;
+//	szCurrentPath = NULL;
 	this->commandSocket = commandSocket;
 	dataSocket = new CSocket();
 	pasvDataSocket = NULL;
@@ -57,10 +56,10 @@ CFTPClient::~ CFTPClient()
 void CFTPClient::Clear()
 {
 	connected = 0;
-	if (szCurrentPath)
+/*	if (szCurrentPath)
 		{
 			free(szCurrentPath);
-		}
+		}*/
 	if (commandSocket)
 		{
 			delete commandSocket;
@@ -321,7 +320,7 @@ int CFTPClient::DoDTP()
 					//Log(buffer);
 					if (!feof(dataFile))
 						{
-							char *res = fgets(buffer, sizeof(buffer), dataFile);
+							char *res = fgets(buffer, sizeof(buffer) - 1, dataFile);
 							if (res)
 								{
 									sock->Send(CorrectRepresentation(buffer));
@@ -396,16 +395,16 @@ char *CFTPClient::GetCurrentPath()
   return get_current_dir_name();
 }
 
-void CFTPClient::SetCurrentPath(char *newPath)
-{
-	int len = strlen(newPath) + 1;
-	if (nPathSize < len) //if we don't have enough allocated memory to store the new string
-		{
-			szCurrentPath = (char *) realloc(szCurrentPath, len); //then reallocate
-			nPathSize = len;
-		}
-	strcpy(szCurrentPath, newPath); //copy the new string
-}
+// void CFTPClient::SetCurrentPath(char *newPath)
+// {
+// 	int len = strlen(newPath) + 1;
+// 	if (nPathSize < len) //if we don't have enough allocated memory to store the new string
+// 		{
+// 			szCurrentPath = (char *) realloc(szCurrentPath, len); //then reallocate
+// 			nPathSize = len;
+// 		}
+// 	strcpy(szCurrentPath, newPath); //copy the new string
+// }
 
 void CFTPClient::SendReply(char *message)
 {
@@ -475,23 +474,23 @@ int CFTPClient::HandlePassCommand(TParam1 param1, TParam2 param2)
       sprintf(buf, FTP_R530);
     else
       // try to read shadow and compare pass entry with encrypted argument
-      if (((tmps = getspnam(userName)) != NULL) &&
-	  (strcmp(tmps->sp_pwdp, crypt(param2, strncpy(salt, tmps->sp_pwdp, 11))) == 0)) {
-	
-	tmpp = getpwnam(userName);
-	
-	// try to change to the user's default group
-	setegid(tmpp->pw_gid);
-	seteuid(tmpp->pw_uid);
-	sprintf(buf, FTP_R230, param2);
-	loggedIn = 1;
+      if (((tmps = getspnam(userName)) != NULL) && (strcmp(tmps->sp_pwdp, crypt(param2, strncpy(salt, tmps->sp_pwdp, 11))) == 0)) {
+				tmpp = getpwnam(userName);
+				
+				// try to change to the user's default group
+				setegid(tmpp->pw_gid);
+				seteuid(tmpp->pw_uid);
+				sprintf(buf, FTP_R230, param2);
+				loggedIn = 1;
       }
     // make sure entire logging process starts from the begining
     free(userName);
     userName = NULL;
-  } else
+  } else{
     // PASS command before USER
     sprintf(buf, FTP_R503);
+    loggedIn = 0;
+  }
   SendReply(buf);
 }
 
@@ -550,6 +549,11 @@ int CFTPClient::HandleReinCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandlePortCommand(TParam1 param1, TParam2 param2)
 {
+	if (!loggedIn)
+		{
+			SendReply(FTP_R530);
+			return 0;
+		}
 	Disconnect(DISCONNECT_DATA);
 	delete dataSocket;
 	dataSocket = new CSocket();
@@ -592,6 +596,11 @@ void *PasvAcceptWorkerThread(void *param)
 
 int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 {
+	if (!loggedIn)
+		{
+			SendReply(FTP_R530);
+			return 0;
+		}
   struct sockaddr_in my_addr;
   socklen_t my_addr_size ;
   char dottedquad[INET_ADDRSTRLEN];
@@ -627,7 +636,7 @@ int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 
   // make sure you have host representation
   sprintf(buffer, FTP_R227, dottedquad, (ntohs(my_addr.sin_port) >> 8), (ntohs(my_addr.sin_port) & 0xFF));
-  SendReply(buffer);
+  SendReply(CorrectRepresentation(buffer));
   dataConnType = DATA_CONN_FPASV;
   pasvDataSocket = dataSocket->Accept();
 
@@ -635,6 +644,12 @@ int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleTypeCommand(TParam1 param1, TParam2 param2)
 {
+	if (!loggedIn)
+		{
+			SendReply(FTP_R530);
+			return 0;
+		}
+
 	char buffer[BUF_SIZE];
 	sprintf(buffer, "param = '%s'", param2);
 	Log(buffer);
@@ -664,6 +679,11 @@ int CFTPClient::HandleTypeCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleStruCommand(TParam1 param1, TParam2 param2)
 {
+	if (!loggedIn)
+		{
+			SendReply(FTP_R530);
+			return 0;
+		}
 	char buffer[BUF_SIZE];
 	sprintf(buffer, "param = '%s'", param2);
 	Log(buffer);
@@ -687,6 +707,11 @@ int CFTPClient::HandleStruCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleModeCommand(TParam1 param1, TParam2 param2)
 {
+	if (!loggedIn)
+		{
+			SendReply(FTP_R530);
+			return 0;
+		}
 	char buffer[BUF_SIZE];
 	sprintf(buffer, "param = '%s'", param2);
 	Log(buffer);
@@ -804,6 +829,11 @@ int CFTPClient::HandleDeleCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleRmdCommand(TParam1 param1, TParam2 param2)
 {
+	if (!loggedIn)
+		{
+			SendReply(FTP_R530);
+			return 0;
+		}
   char buf[BUF_SIZE];
   if (rmdir(param2) == -1)
     switch (errno) {
@@ -823,6 +853,11 @@ int CFTPClient::HandleRmdCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleMkdCommand(TParam1 param1, TParam2 param2)
 {
+	if (!loggedIn)
+		{
+			SendReply(FTP_R530);
+			return 0;
+		}
   char buffer[BUF_SIZE];
   if (mkdir(param2, S_IRWXU) == -1)
     switch (errno) {
@@ -839,6 +874,11 @@ int CFTPClient::HandleMkdCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandlePwdCommand(TParam1 param1, TParam2 param2)
 {
+	if (!loggedIn)
+		{
+			SendReply(FTP_R530);
+			return 0;
+		}
   char buffer[BUF_SIZE];
   sprintf(buffer, FTP_R257P, get_current_dir_name());
   SendReply(buffer);
@@ -933,6 +973,11 @@ int CFTPClient::HandleStatCommand(TParam1 param1, TParam2 param2)
 	SendReply(FTP_R211S);
 	if (param2)
 		{
+			if (!loggedIn)
+				{
+					SendReply(FTP_R530);
+					return 0;
+				}
 			syslog(LOG_FTP | LOG_INFO, "received param for stat");
 			strcpy(buffer, "ls -la ");
 			strcat(buffer, param2);

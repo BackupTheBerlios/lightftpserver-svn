@@ -1,7 +1,5 @@
 /**
-Utils.cpp short description.
-
-Utils.cpp long description.
+	Several utility functions.
 */
 /***************************************************************************
  *   Copyright (C) 2005 by Cristi, Diana, Ion                              *

@@ -1,7 +1,5 @@
 /**
-Utils.h short even more description. uhh ohh, conflict
-
-Utils.h detailed description.
+	Several utility functions.
 */
 
 /***************************************************************************
@@ -32,8 +30,19 @@ Utils.h detailed description.
 #define SHOW_DEBUG_MESSAGES
 
 
+/**
+Wrapper for syslog(LOG_FTP | LOG_INFO, message)
+
+\param message The message to log.
+*/
 
 void Log(char *message); //wrapper for syslog(LOG_FTP | LOG_INFO, message) - easier to write
+/**
+Logs the string with escape characters visible.
+
+Escape characters like '\n' become "\\n" so they in fact become visible. Knows about '\n', '\t', '\r'. '\\'.
+\param message The message to log.
+*/
 void LogSpecialChars(char *message);
 
 /**
@@ -66,22 +75,38 @@ char *GetLocalDateTimeAsString(char *szDateTime, size_t size);
 
 
 /**
-\todo write doc
+Removes trailing characters from a string.
+
+Removes the characters found in szTrimChars that are either at the start or end of the string.
+\param szText String to trim. Will be modified to reflect the changes.
+\param szTrimChars Characters to trim.
+\return Returns the modified string.
 */
 char *StrTrim(char *szText, const char *szTrimChars);
 
 /**
-\todo write doc
+Fills a memory block with 0.
+
+\param data Pointer to data to fill with 0's.
+\param len Length of data.
+\return Returns data filled with 0's.
 */
 void ZeroMemory(void *data, size_t len);
 
 /**
-\todo write doc
+Creates a sockaddress from a set of parameters.
+
+\param family Socket family.
+\param port Socket port.
+\param host Ip of host.
 */
 sockaddr_in CreateSocketAddress(sa_family_t family, int port, char *host);
 
 /**
-\todo write doc
+Writes a debug message to screen.
+
+Obsolete since the main process doesn't have any file descriptors open.
+\param format The format of the message
 */
 void DebugMessage(const char *format, ...);
 

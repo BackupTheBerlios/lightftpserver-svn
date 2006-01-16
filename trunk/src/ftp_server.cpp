@@ -1,7 +1,7 @@
 /**
    The main file.
 
-   Long description of the main file.
+   This is the main file for the server.
 */
 
 /***************************************************************************
@@ -56,6 +56,11 @@
 
 char cr = 13, lf = 10;
 
+/**
+	Handles the signals received by the main program.
+	
+	This will handle the singnals received by the main program, including SIGQUIT, SIGINT and SIGTERM.
+*/
 void HandleTerminationSignals(int nSignal)
 {
   switch (nSignal) //received singal
@@ -67,6 +72,12 @@ void HandleTerminationSignals(int nSignal)
       exit(EXIT_SUCCESS);
     }
 }
+
+/**
+	This handles the signals received from child processes.
+	
+	This will handle signals received by the main program, notifying it of child processes status.
+*/
 void HandleChildTermination(int nSignal)
 {
   int stat;
@@ -74,6 +85,9 @@ void HandleChildTermination(int nSignal)
   syslog(LOG_FTP | LOG_INFO, "slave exited with status: %d", stat);
 }
 
+/**
+	This function hooks the necessary singnals.
+*/
 int HookTerminationSignals()
 {
   signal(SIGQUIT, HandleTerminationSignals);
@@ -82,6 +96,11 @@ int HookTerminationSignals()
 //  signal(SIGCHLD, HandleChildTermination); - popen nu mai functioneaza
 }
 
+/**
+	This function will make the main program a daemon.
+	
+	What this does is it closes all open file descriptors, creates a few child processes to change parents and changes the path to a safe location.
+*/
 void MakeDaemon()
 {
   int i;
@@ -122,183 +141,9 @@ void MakeDaemon()
 }
 
 
-/*TODO ioni - miscarea asta nu am inteles-o. Nu am facut CFTPClient ca sa fie totul centralizat ? 
-	nu de aia am facut si clasa CSocket, sa fie mai usor de lucrat cu ele ?
-
-int activeTCPLowLevel(u_int32_t address, u_int16_t port) {
-  struct sockaddr_in server_addr;
-  int asock;
-
-  // fill the address structure
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_port = port;
-  server_addr.sin_addr.s_addr = address;
-  // create the socket
-  if ( (asock = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
-    syslog(LOG_FTP|LOG_ERR, "activeTCPLowLevel: socket: %m");
-    exit(1);
-  }
-  // connect to the remote host
-  if (connect(asock, (sockaddr*)&server_addr, sizeof(server_addr)) == -1)  {
-    syslog(LOG_FTP|LOG_ERR, "activeTCPLowLevel: connect: %m");
-    exit(1);
-  }
-  return asock;
-}
-
-int passiveTCPLowLevel(u_int32_t address, u_int16_t port, int queue_size) {
-  struct sockaddr_in interface;
-  int psock;
-
-  // fill the address structure
-  interface.sin_family = AF_INET;
-  interface.sin_port = port;
-  interface.sin_addr.s_addr = address;
-  // create the socket
-  if ( (psock = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
-    syslog(LOG_FTP|LOG_ERR, "passiveTCPLowLevel: socket: %m");
-    exit(1);
-  }
-  // bind socket to address
-  if (bind(psock, (struct sockaddr*)&interface, sizeof(interface)) == -1) {
-    syslog(LOG_FTP|LOG_ERR, "passiveTCPLowLevel: bind: %m");
-    exit(1);
-  }
-  // listen on the given port
-  if (listen(psock, queue_size) == -1) {
-    syslog(LOG_FTP|LOG_ERR, "passiveTCPLowLevel: listen: %m");
-    exit(1);
-  }
-
-  return psock;
-}
-
-// int activeTCP(char * host_pre, char * port_pre) {
-//   struct hostent* host;
-//   u_int16_t port;
-  
-//   // transf. dotted-quad/hostname to struct in_addr
-//   host = gethostbyname(host_pre);
-//   if (host == NULL) 
-//     switch (h_errno) {
-//     case HOST_NOT_FOUND: {
-//       syslog(LOG_FTP|LOG_ERR,
-// 	     "activeTCP: gethostbyname: the specified host is unknown");
-//       exit(1);
-//     }
-//     case NO_ADDRESS: {
-//       syslog(LOG_FTP|LOG_ERR,
-// 	     "activeTCP: gethostbyname: the requested name is valid but it does not have an IP address");
-//       exit(1);
-//     }
-//     case NO_RECOVERY: {
-//       syslog(LOG_FTP|LOG_ERR,
-// 	     "activeTCP: gethostbyname: a non-recoverable name server error occurred");
-//       exit(1);
-//     }
-//     case TRY_AGAIN: {
-//       syslog(LOG_FTP|LOG_ERR,
-// 	     "activeTCP: gethostbyname: a temporary error occurred on an authoritative name server.  Try again later.");
-//       exit(1);
-//     }
-//     default: {
-//       syslog(LOG_FTP|LOG_ERR, "activeTCP: gethostbyname: %m");
-//       exit(1);
-//     }
-//     }
-  
-//   // transf. port
-//   char* end_pointer = NULL;
-//   // try to convert
-//   port = strtoumax(port_pre, &end_pointer, 10);
-
-//   // TODO: test overflow/underflow
-//   if (*end_pointer != 0) {
-//     syslog(LOG_FTP|LOG_ERR, "activeTCP: invalid port specification");
-//     exit(1);
-//   }
-//   return activeTCPLowLevel(((struct in_addr *)host->h_addr_list[0])->s_addr, port);
-// }
-
-void sendReply(int sock, char * reply) {
-  if (write(sock, reply, strlen(reply)) == -1) {
-    syslog(LOG_FTP | LOG_ERR, "sendReply: write: %m");
-    exit(1);
-  }
-  if (write(sock, &cr, 1) == -1) {
-    syslog(LOG_FTP | LOG_ERR, "sendReply: write: %m");
-    exit(1);
-  }
-  if (write(sock, &lf, 1) == -1) {
-    syslog(LOG_FTP | LOG_ERR, "sendReply: write: %m");
-    exit(1);
-  }
-}
-
-void ftpService(int sock) {
-  char buf [BUF_SIZE];
-  char reply [BUF_SIZE];
-  bool terminate = false;
-  int n, on, i;
-  char *delimiters = " \n\r";
-  char *temp, *cmd, *arg;
-
-  // don't wait for system buffer to be full
-  on = 1;
-  if (setsockopt(sock, SOL_SOCKET, SO_OOBINLINE, (char*)&on, sizeof(on)) == -1) {
-    syslog(LOG_FTP | LOG_ERR, "ftpService: setsockopt: %m");
-    exit(1);
-  }
-
-  // let the peer know that you are ready
-  snprintf(reply, BUF_SIZE, FTP_R220, "LightFTPServer v0.1");
-  sendReply(sock, reply);
-
-  while (!terminate) {
-    // read command
-    memset(buf, 0, BUF_SIZE);
-    // TODO: loop to read all data
-    if ( (n = read(sock, buf, BUF_SIZE)) == -1) {
-      syslog(LOG_FTP | LOG_ERR, "ftpService: read: %m");
-      exit(1);
-    }
-    // TODO: check if command too large for buffer = not ending in CRLF
-
-    // parse cmd and arguments
-    temp = strdupa(buf);
-    cmd = strtok(temp, delimiters);
-    arg = strtok(NULL, delimiters);
-//     free(temp);
-    // should ignore blank commands or send a reply?
-    if (cmd != NULL) {
-      // look for handler
-      for (i = 0; i < _FTPCMDS_END; i++)
-
-{//	if (strcasecmp(cmd, ftpcmds[i]) == 0) {
-//	  ftphandlers[i](cmd, arg, (char*)&reply, BUF_SIZE, &terminate);
-
-// 	  // say good bye and terminate
-// 	  if (i == FTP_CQUIT) {
-// 	    terminate = true;
-// 	    snprintf(reply, BUF_SIZE, FTP_R221);
-// 	  }
-// 	  else
-// 	    // handle command
-// 	    snprintf(reply, BUF_SIZE, FTP_R200, cmd);
-	  break;
-	}
-      // unknown command
-      if (i == _FTPCMDS_END)
-	snprintf(reply, BUF_SIZE, FTP_R500, cmd);
-      // send back reply
-      sendReply(sock, reply);
-    }
-  }
-
-  close(sock);
-}
+/**
+	All the magic starts here.
 */
-
 int main(int argc, char** argv)
 
 {
