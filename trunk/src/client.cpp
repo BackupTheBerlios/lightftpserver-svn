@@ -750,7 +750,7 @@ int CFTPClient::HandleRetrCommand(TParam1 param1, TParam2 param2)
     } else {
       sprintf(buf, FTP_R150);
       dataConnActive = DATA_CONN_ACTIVE;
-      dataConnType  = DATA_CONN_SEND;      
+      dataConnType  |= DATA_CONN_SEND;      
       fileType = DATA_FILE_FILE;
       dataFile = tmp;
     }
