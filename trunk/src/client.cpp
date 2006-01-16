@@ -600,24 +600,18 @@ int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
   dataSocket = new CSocket(); //WHY ??? WTF
   // 	int port; //dataSocket->Port();
   int res = 1;
-  // 	for (port = 64000; (res != 0); port--) //find an open port
-  // 		{
-  // 			res = dataSocket->Bind(AF_INET, port, "127.0.0.1");
-  // 			if (res != 0)
-  // 				{
-  // 					syslog(LOG_FTP | LOG_INFO, "Error at bind %m");
-  // 				}
-  // 		}
-  // 	port++;
+
   res = dataSocket->Listen(16);
   if (res < 0)
     {
       syslog(LOG_FTP | LOG_INFO, "Error at listen %m");
     }
-  // find ip and port
+
   my_addr_size = sizeof(my_addr);
-  if (getsockname(dataSocket->Socket(), (struct sockaddr*)&my_addr, &my_addr_size) == -1)
+  // get IP from the PI local endpoint
+  if (getsockname(commandSocket->Socket(), (struct sockaddr*)&my_addr, &my_addr_size) == -1)
     syslog(LOG_FTP|LOG_DEBUG, "getsockname: %m");
+
   // dotted representation of addr
   if (inet_ntop(AF_INET, &my_addr.sin_addr, (char*)&dottedquad, INET_ADDRSTRLEN) == NULL) 
     syslog(LOG_FTP|LOG_DEBUG, "inet_ntop: %m");
@@ -627,15 +621,16 @@ int CFTPClient::HandlePasvCommand(TParam1 param1, TParam2 param2)
       dottedquad[i] = ',';
 	
   char buffer[BUF_SIZE];
-  // 	sprintf(buffer, FTP_R227, "127,0,0,1", (port >> 8), (port & 0xFF));
-  sprintf(buffer, FTP_R227, dottedquad, (my_addr.sin_port >> 8), (my_addr.sin_port & 0xFF));
+  // get port from the DTP local endpoint
+  if (getsockname(dataSocket->Socket(), (struct sockaddr*)&my_addr, &my_addr_size) == -1)
+    syslog(LOG_FTP|LOG_DEBUG, "getsockname: %m");
+
+  // make sure you have host representation
+  sprintf(buffer, FTP_R227, dottedquad, (ntohs(my_addr.sin_port) >> 8), (ntohs(my_addr.sin_port) & 0xFF));
   SendReply(buffer);
   dataConnType = DATA_CONN_FPASV;
-  Log("Accepting pasv connection (please connect before continuing)  '%m' ...");
-  while(!pasvDataSocket)
-    {
-      pasvDataSocket = dataSocket->Accept();
-    }
+  pasvDataSocket = dataSocket->Accept();
+
 }
 
 int CFTPClient::HandleTypeCommand(TParam1 param1, TParam2 param2)
@@ -715,6 +710,28 @@ int CFTPClient::HandleModeCommand(TParam1 param1, TParam2 param2)
 
 int CFTPClient::HandleRetrCommand(TParam1 param1, TParam2 param2)
 {
+  char buf[BUF_SIZE];
+  FILE* tmp;
+
+  if (!loggedIn)
+    sprintf(buf, FTP_R530);
+  else
+    if (param2 == NULL)
+      sprintf(buf, FTP_R501);
+    else {
+    if ((tmp = fopen(param2, "r")) == NULL) {
+      sprintf(buf, FTP_R500);
+      syslog(LOG_FTP|LOG_DEBUG, "fopen: %m");
+    } else {
+      sprintf(buf, FTP_R150);
+      dataConnActive = DATA_CONN_ACTIVE;
+      dataConnType  = DATA_CONN_SEND;      
+      fileType = DATA_FILE_FILE;
+      dataFile = tmp;
+    }
+    }
+
+  SendReply(buf);
 }
 
 int CFTPClient::HandleStorCommand(TParam1 param1, TParam2 param2)
